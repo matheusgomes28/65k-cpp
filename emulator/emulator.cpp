@@ -28,20 +28,65 @@ struct Cpu {
     std::bitset<8> flags{};
 
     // memory (Zero page/first FF bytes, main memory, vram)
-    std::array<std::uint8_t, 0xFF> mem{};
+    std::array<std::uint8_t, 0xFFFF> mem{};
 };
 } // namespace emulator
 
-void lda_immediate(emulator::Cpu& cpu, std::uint8_t val)
+std::optional<std::size_t> ld_immediate(emulator::Cpu& cpu, std::span<std::uint8_t> program, std::uint8_t emulator::Registers::*reg)
 {
-    cpu.reg.a = val;
-    cpu.flags[1] = val == 0;
-    cpu.flags[7] = val & 0b1000'0000;
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+    auto const value = program[cpu.reg.pc + 1];
+    (cpu.reg).*reg = value;
+    cpu.flags[1] = value == 0;
+    cpu.flags[7] = value & 0b1000'0000;
+
+    return 2;
+}
+
+std::optional<std::size_t> inc_zeropage(emulator::Cpu& cpu, std::span<std::uint8_t> program)
+{
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const pos = program[cpu.reg.pc + 1];
+    cpu.mem[pos]++;
+    cpu.flags[1] = cpu.mem[pos] == 0;
+    cpu.flags[7] = cpu.mem[pos] & 0b1000'0000;
+
+    return 2;
+}
+
+std::optional<std::size_t> txa(emulator::Cpu& cpu)
+{
+    cpu.reg.a = cpu.reg.x;
+    cpu.flags[1] = cpu.reg.a == 0;
+    cpu.flags[7] = cpu.reg.a & 0b1000'0000;
+    return 1;
 }
 
 void sta_zeropage(emulator::Cpu& cpu, std::uint8_t value)
 {
     cpu.mem[value] = cpu.reg.a;
+}
+
+std::optional<std::size_t> sta_ind_y(emulator::Cpu& cpu, std::span<std::uint8_t> program)
+{
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+    auto const ind = program[cpu.reg.pc + 1];
+    auto const pos = cpu.mem[ind];
+    
+    // TODO : this needs a bounds check here
+    // can probably return nullopt
+    cpu.mem[pos + cpu.reg.y] = cpu.reg.a;
+    return 2;
 }
 
 std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<std::uint8_t> program)
@@ -52,7 +97,7 @@ std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<std::uint8
     }
     
     auto const command = program[cpu.reg.pc];
-    auto bytes_read = 0;
+    std::optional<std::size_t> bytes_read = std::nullopt;
     // Read {1, 2,3} bytes for the operand
     switch (command)
     {
@@ -62,18 +107,9 @@ std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<std::uint8
         bytes_read = 0;
         break;
     }
-    case 0xa9: // LDA #$XX
-    { // This should take 2 cicles
-        // LOAD Value into accumulator
-        if ((cpu.reg.pc + 1) >= program.size())
-        {
-            return std::nullopt;
-        }
-        
-        auto const value = program[cpu.reg.pc + 1];
-        std::cout << fmt::format("running command {:x} with {:x}\n", command, value);
-        lda_immediate(cpu, value);
-        bytes_read = 2;
+    case 0x8A: // TXA
+    {
+        bytes_read = txa(cpu);
         break;
     }
     case 0x85: // STA $XX
@@ -90,6 +126,31 @@ std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<std::uint8
         bytes_read = 2;
         break;
         //std::cout << fmt::format("running command {:x} with {:x}\n", command, operand);
+    }
+    case 0x91: // STA($XX), Y
+    {
+        bytes_read = sta_ind_y(cpu, program);
+        break;
+    }
+    case 0xa0: // LDY #$XX
+    { // This should take 2 cicles
+        bytes_read = ld_immediate(cpu, program, &emulator::Registers::y);
+        break;
+    }
+    case 0xa2: // LDX #$XX
+    { // This should take 2 cicles
+        bytes_read = ld_immediate(cpu, program, &emulator::Registers::x);
+        break;
+    }
+    case 0xa9: // LDA #$XX
+    { // This should take 2 cicles
+        bytes_read = ld_immediate(cpu, program, &emulator::Registers::a);
+        break;
+    }
+    case 0xe6:
+    {
+        bytes_read = inc_zeropage(cpu, program);
+        break;
     }
     default:
         // unsupported command
