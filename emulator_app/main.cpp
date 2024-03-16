@@ -15,22 +15,22 @@ import emulator;
 namespace {
 
     static constexpr std::array<Color, 16> colour_table {{
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
-        {255, 0, 0, 255},
+        {0, 0, 0, 255},         // Black
+        {255, 255, 255, 255},   // White
+        {136, 0, 0, 255},       // Dark Red
+        {170, 255, 238, 255},   // Light Cyan
+        {204, 68, 204, 255},    // Violet
+        {0, 204, 85, 255},      // Light Green
+        {0, 0, 170, 255},       // Blue
+        {255, 241, 224, 255},
+        {221, 136, 85, 255},    // Light Brown
+        {102, 68, 0, 255},      // Dark Brown
+        {255, 119, 119, 255},   // Light Red
+        {51, 51, 51, 255},      // Dark Grey
+        {119, 119, 119, 255},   // Light Grey
+        {170, 255, 102, 255},   // Light Lime
+        {0, 136, 255, 255},     // Light Blue
+        {187, 187, 187, 255}    // Grey
     }};
 }
 
@@ -72,7 +72,6 @@ int main(int argc, char** argv) {
     }
     
     emulator::Cpu easy65k;
-    auto a1 = std::async(std::launch::async, [](emulator::Cpu& cpu){ return draw(cpu); }, std::ref(easy65k));
 
     auto const filename = argv[1];
     auto file = std::ifstream{filename};
@@ -82,5 +81,5 @@ int main(int argc, char** argv) {
     
     emulator::execute(easy65k, {reinterpret_cast<std::uint8_t*>(program_contents.data()), program_contents.size()});
 
-    a1.wait();
+    draw(easy65k);
 }
