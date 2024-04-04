@@ -76,6 +76,47 @@ Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
     };
 }
 
+Instruction ld_zeropage(std::uint8_t emulator::Registers::*reg)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    {
+        if ((cpu.reg.pc + 1) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+        // Safe to dereference cpu.mem[pos] as pos
+        // will be an std::uint8_t
+        auto const pos   = program[cpu.reg.pc + 1];
+        auto const value = cpu.mem[pos];
+        (cpu.reg).*reg   = value;
+        cpu.flags.z      = value == 0;
+        cpu.flags.n      = value & 0b1000'0000;
+
+        return std::make_optional<std::size_t>(2);
+    };
+}
+
+Instruction ld_zeropage_plus_reg(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    {
+        if ((cpu.reg.pc + 1) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+        // TODO : Write some tests for the wrapping behaviour
+        auto const pos   = program[cpu.reg.pc + 1] + (cpu.reg).*add;
+        auto const value = cpu.mem[pos];
+        (cpu.reg).*to    = value;
+        cpu.flags.z      = value == 0;
+        cpu.flags.n      = value & 0b1000'0000;
+
+        return std::make_optional<std::size_t>(2);
+    };
+}
+
 std::optional<std::size_t> inc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     if ((cpu.reg.pc + 1) >= program.size())
@@ -273,9 +314,15 @@ std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<const std:
 
         // TODO : Finish supporting the ld* family
         // of instructions
-        {0xa0, ld_immediate(&emulator::Registers::y)},
-        {0xa2, ld_immediate(&emulator::Registers::x)},
         {0xa9, ld_immediate(&emulator::Registers::a)},
+        {0xa5, ld_zeropage(&emulator::Registers::a)},
+        {0xb5, ld_zeropage_plus_reg(&emulator::Registers::a, &emulator::Registers::x)},
+        {0xa2, ld_immediate(&emulator::Registers::x)},
+        {0xa6, ld_zeropage(&emulator::Registers::x)},
+        {0xb6, ld_zeropage_plus_reg(&emulator::Registers::x, &emulator::Registers::y)},
+        {0xa0, ld_immediate(&emulator::Registers::y)},
+        {0xa4, ld_zeropage(&emulator::Registers::y)},
+        {0xb4, ld_zeropage_plus_reg(&emulator::Registers::y, &emulator::Registers::x)},
 
         // TODO : finish support for the cmp* family
         // of instructions
@@ -329,5 +376,4 @@ export namespace emulator
 
         return true;
     }
-
 } // namespace emulator
