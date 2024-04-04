@@ -2,10 +2,21 @@ include(CTest)
 
 find_package(GTest REQUIRED COMPONENTS gtest_main)
 
-add_executable(emulator_tests emulator_tests.cpp)
-target_link_libraries(emulator_tests
- PRIVATE
-  emulator
-  gtest::gtest)
 
-add_test(NAME emulator_tests COMMAND emulator_tests)
+# This is meant to be used on single .cpp files that
+# export GTest functions. Use "create_tests" by calling
+# it with the filename minus the extension.
+# Note that the file must be in the "tests" directory
+function(create_tests cpp_file_name)
+  add_executable(${cpp_file_name} ${cpp_file_name}.cpp)
+  target_link_libraries(${cpp_file_name}
+  PRIVATE
+    emulator
+    gtest::gtest)
+
+  add_test(NAME ${cpp_file_name} COMMAND ${cpp_file_name})
+endfunction()
+
+
+create_tests(emulator_tests)
+create_tests(ld_tests)
