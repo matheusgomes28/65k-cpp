@@ -1,21 +1,8 @@
 import emulator;
 
-#include <bitset>
-#include <gtest/gtest.h>
+#include "common.h"
 
-constexpr emulator::Flags make_flags(std::bitset<8> flags)
-{
-    // CZID B1VN
-    return emulator::Flags{
-        .n = flags[7],
-        .v = flags[6],
-        .b = flags[4],
-        .d = flags[3],
-        .i = flags[2],
-        .z = flags[1],
-        .c = flags[0],
-    };
-}
+#include <gtest/gtest.h>
 
 // NOLINTNEXTLINE
 TEST(EmulatorTests, EmulatesTXANoFlags)

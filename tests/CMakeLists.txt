@@ -19,4 +19,9 @@ endfunction()
 
 
 create_tests(emulator_tests)
-create_tests(ld_tests)
+create_tests(ld_immediate_tests)
+create_tests(ld_zeropage_tests)
+create_tests(ld_absolute_tests)
+create_tests(ld_absolute_indexed_tests)
+create_tests(ld_index_indirect_tests)
+create_tests(ld_indirect_indexed_tests)
