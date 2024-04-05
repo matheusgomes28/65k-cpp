@@ -107,12 +107,108 @@ Instruction ld_zeropage_plus_reg(std::uint8_t emulator::Registers::*to, std::uin
         }
 
         // TODO : Write some tests for the wrapping behaviour
-        auto const pos   = program[cpu.reg.pc + 1] + (cpu.reg).*add;
-        auto const value = cpu.mem[pos];
-        (cpu.reg).*to    = value;
-        cpu.flags.z      = value == 0;
-        cpu.flags.n      = value & 0b1000'0000;
+        std::uint8_t const pos   = program[cpu.reg.pc + 1] + (cpu.reg).*add;
+        std::uint8_t const value = cpu.mem[pos];
+        (cpu.reg).*to            = value;
+        cpu.flags.z              = value == 0;
+        cpu.flags.n              = value & 0b1000'0000;
 
+        return std::make_optional<std::size_t>(2);
+    };
+}
+
+Instruction ld_absolute(std::uint8_t emulator::Registers::*to)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    {
+        if ((cpu.reg.pc + 2) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+
+        std::uint16_t const lsb  = program[cpu.reg.pc + 1];
+        std::uint16_t const hsb  = program[cpu.reg.pc + 2];
+        std::uint16_t const pos  = (hsb << 8) | lsb;
+        std::uint8_t const value = cpu.mem[pos];
+
+        (cpu.reg).*to = value;
+        cpu.flags.z   = value == 0;
+        cpu.flags.n   = value & 0b1000'0000;
+        return std::make_optional<std::size_t>(3);
+    };
+}
+
+Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    {
+        if ((cpu.reg.pc + 2) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+        // Do we want to put these numbers as std::uint16_t?
+        std::uint16_t const lsb = program[cpu.reg.pc + 1];
+        std::uint16_t const hsb = program[cpu.reg.pc + 2];
+
+        std::uint16_t const pos  = ((hsb << 8) | lsb) + static_cast<std::uint16_t>((cpu.reg).*add);
+        std::uint8_t const value = cpu.mem[pos];
+
+        (cpu.reg).*to = value;
+        cpu.flags.z   = value == 0;
+        cpu.flags.n   = value & 0b1000'0000;
+        return std::make_optional<std::size_t>(3);
+    };
+}
+
+// This is basically zeropage + x, but an extra indirection with
+// the value ad zeropage + x as a position
+Instruction ld_index_indirect(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    {
+        if ((cpu.reg.pc + 1) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+        // The indirection position should wrap around the zeropage
+        std::uint16_t const zeropage  = program[cpu.reg.pc + 1];
+        std::uint16_t const pos_index = (zeropage + static_cast<std::uint16_t>((cpu.reg).*add)) & 0xff;
+
+        std::uint16_t const lsb  = cpu.mem[pos_index];
+        std::uint16_t const hsb  = cpu.mem[pos_index + 1];
+        std::uint16_t const pos  = (hsb << 8) | lsb;
+        std::uint8_t const value = cpu.mem[pos];
+
+        (cpu.reg).*to = value;
+        cpu.flags.z   = value == 0;
+        cpu.flags.n   = value & 0b1000'0000;
+        return std::make_optional<std::size_t>(2);
+    };
+}
+
+Instruction ld_indirect_index(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    {
+        if ((cpu.reg.pc + 1) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+        // The indirection position should wrap around the zeropage
+        std::uint16_t const zeropage = program[cpu.reg.pc + 1];
+        std::uint16_t const lsb      = cpu.mem[zeropage];
+        std::uint16_t const hsb      = cpu.mem[zeropage + 1];
+        std::uint16_t const pos      = ((hsb << 8) | lsb) + static_cast<std::uint16_t>((cpu.reg).*add);
+
+        std::uint8_t const value = cpu.mem[pos];
+
+        (cpu.reg).*to = value;
+        cpu.flags.z   = value == 0;
+        cpu.flags.n   = value & 0b1000'0000;
         return std::make_optional<std::size_t>(2);
     };
 }
@@ -124,7 +220,7 @@ std::optional<std::size_t> inc_zeropage(emulator::Cpu& cpu, std::span<const std:
         return std::nullopt;
     }
 
-    auto const pos = program[cpu.reg.pc + 1];
+    std::uint8_t const pos = program[cpu.reg.pc + 1];
     cpu.mem[pos]++;
     cpu.flags.z = cpu.mem[pos] == 0;
     cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
@@ -317,12 +413,21 @@ std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<const std:
         {0xa9, ld_immediate(&emulator::Registers::a)},
         {0xa5, ld_zeropage(&emulator::Registers::a)},
         {0xb5, ld_zeropage_plus_reg(&emulator::Registers::a, &emulator::Registers::x)},
+        {0xbd, ld_absolute_plus_reg(&emulator::Registers::a, &emulator::Registers::x)},
+        {0xb9, ld_absolute_plus_reg(&emulator::Registers::a, &emulator::Registers::y)},
+        {0xa1, ld_index_indirect(&emulator::Registers::a, &emulator::Registers::x)},
+        {0xb1, ld_indirect_index(&emulator::Registers::a, &emulator::Registers::y)},
+        {0xad, ld_absolute(&emulator::Registers::a)},
         {0xa2, ld_immediate(&emulator::Registers::x)},
         {0xa6, ld_zeropage(&emulator::Registers::x)},
         {0xb6, ld_zeropage_plus_reg(&emulator::Registers::x, &emulator::Registers::y)},
+        {0xae, ld_absolute(&emulator::Registers::x)},
+        {0xbe, ld_absolute_plus_reg(&emulator::Registers::x, &emulator::Registers::y)},
         {0xa0, ld_immediate(&emulator::Registers::y)},
         {0xa4, ld_zeropage(&emulator::Registers::y)},
         {0xb4, ld_zeropage_plus_reg(&emulator::Registers::y, &emulator::Registers::x)},
+        {0xbc, ld_absolute_plus_reg(&emulator::Registers::y, &emulator::Registers::x)},
+        {0xac, ld_absolute(&emulator::Registers::y)},
 
         // TODO : finish support for the cmp* family
         // of instructions

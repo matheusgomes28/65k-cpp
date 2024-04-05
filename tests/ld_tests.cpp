@@ -726,3 +726,826 @@ TEST(LDTests, LDYZeropagePlusXWithNegative)
     // Flags expect
     ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
 }
+
+/***************************************************
+************** LD* Absolute Tests ******************
+***************************************************/
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAAbsoluteNonZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // Load `0x5a` into mem address `0x0200` and
+    // see if the LDA absolute command will load
+    // the value into register A
+    cpu.mem[0x0200] = 0x5a;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xad,
+        0x00,
+        0x02,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x5a);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDXAbsoluteNonZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // Load `0x5a` into mem address `0x0200` and
+    // see if the LDA absolute command will load
+    // the value into register X
+    cpu.mem[0x0200] = 0x5a;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xae,
+        0x00,
+        0x02,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x5a);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDYAbsoluteNonZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // Load `0x5a` into mem address `0x0200` and
+    // see if the LDA absolute command will load
+    // the value into register X
+    cpu.mem[0x0200] = 0x5a;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xac,
+        0x00,
+        0x02,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x5a);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAAbsoluteWithZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // We load `0x00` into the `0x0200` mem address
+    // and expect to have `0x00` in register A
+    cpu.mem[0x0200] = 0x00;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xac,
+        0x00,
+        0x02,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDXAbsoluteWithZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // We load `0x00` into the `0x0200` mem address
+    // and expect to have `0x00` in register Y
+    cpu.mem[0x0200] = 0x00;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xad,
+        0x00,
+        0x02,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDYAbsoluteWithZero)
+{
+    emulator::Cpu cpu;
+
+    // We load `0x00` into the `0x0200` mem address
+    // and expect to have `0x00` in register Y
+    cpu.mem[0x0200] = 0x00;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xad,
+        0x00,
+        0x02,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAAbsoluteWithNegative)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // We load `0xF` into the `0x0200` mem address
+    // and expect to have `0x00` in register A, and
+    // the nagative flag set
+    cpu.mem[0x0200] = 0xFF;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xad,
+        0x00,
+        0x02,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0xFF);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDXAbsoluteWithNegative)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // We load `0xF` into the `0x0200` mem address
+    // and expect to have `0x00` in register X, and
+    // the nagative flag set
+    cpu.mem[0x0200] = 0xFF;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xae,
+        0x00,
+        0x02,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0xFF);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDYAbsoluteWithNegative)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // We load `0xF` into the `0x0200` mem address
+    // and expect to have `0x00` in register Y, and
+    // the nagative flag set
+    cpu.mem[0x0200] = 0xFF;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xac,
+        0x00,
+        0x02,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0xFF);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
+}
+
+/***************************************************
+*********** LD* Absolute  + Reg Tests **************
+***************************************************/
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAAbsolutePlusXNonZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // Load `0x5a` into mem address `0x0200` and
+    // see if the LDA absolute command will load
+    // the value into register A
+    cpu.mem[0x0100] = 0x5a;
+    cpu.reg.x       = 0x13;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xbd,
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x5a);
+    ASSERT_EQ(cpu.reg.x, 0x13);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAAbsolutePlusYNonZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // Load `0x5a` into mem address `0x0200` and
+    // see if the LDA absolute command will load
+    // the value into register A
+    cpu.mem[0x0100] = 0x5a;
+    cpu.reg.y       = 0x13;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xb9,
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x5a);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x13);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDXAbsolutePlusYNonZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // Load `0x5a` into mem address `0x0200` and
+    // see if the LDA absolute command will load
+    // the value into register A
+    cpu.mem[0x0100] = 0x5a;
+    cpu.reg.y       = 0x13;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xbe,
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x5a);
+    ASSERT_EQ(cpu.reg.y, 0x13);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDYAbsolutePlusXNonZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // Load `0x5a` into mem address `0x0200` and
+    // see if the LDA absolute command will load
+    // the value into register A
+    cpu.mem[0x0100] = 0x5a;
+    cpu.reg.x       = 0x13;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xbc,
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x13);
+    ASSERT_EQ(cpu.reg.y, 0x5a);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAAbsolutePlusXWithZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // We load `0x00` into the `0x0200` mem address
+    // and expect to have `0x00` in register A
+    cpu.mem[0x0100] = 0x00;
+    cpu.reg.x       = 0x13;
+    cpu.reg.a       = 0xFF;
+    // TODO : add above side effect test in other tests
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xbd,
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x13);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAAbsolutePlusYWithZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // We load `0x00` into the `0x0200` mem address
+    // and expect to have `0x00` in register A
+    cpu.mem[0x0100] = 0x00;
+    cpu.reg.y       = 0x13;
+    cpu.reg.a       = 0xFF;
+    // TODO : add above side effect test in other tests
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xb9,
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x13);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDXAbsolutePlusYWithZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // We load `0x00` into the `0x0200` mem address
+    // and expect to have `0x00` in register A
+    cpu.mem[0x0100] = 0x00;
+    cpu.reg.y       = 0x13;
+    cpu.reg.x       = 0xFF;
+    // TODO : add above side effect test in other tests
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xbe, // change from x
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x13);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDYAbsolutePlusXWithZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    // We load `0x00` into the `0x0200` mem address
+    // and expect to have `0x00` in register A
+    cpu.mem[0x0100] = 0x00;
+    cpu.reg.x       = 0x13;
+    cpu.reg.y       = 0xFF;
+    // TODO : add above side effect test in other tests
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xbc,
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x13);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAAbsolutePlusXWithNegative)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    cpu.mem[0x0100] = 0xFF;
+    cpu.reg.x       = 0x13;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xbd,
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0xFF);
+    ASSERT_EQ(cpu.reg.x, 0x13);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAAbsolutePlusYWithNegative)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    cpu.mem[0x0100] = 0xFF;
+    cpu.reg.y       = 0x13;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xb9,
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0xFF);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x13);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDXAbsolutePlusYWithNegative)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    cpu.mem[0x0100] = 0xFF;
+    cpu.reg.y       = 0x13;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xbe,
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0xFF);
+    ASSERT_EQ(cpu.reg.y, 0x13);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDYAbsolutePlusXWithNegative)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    cpu.mem[0x0100] = 0xFF;
+    cpu.reg.x       = 0x13;
+
+    constexpr std::array<std::uint8_t, 3> program{
+        0xbc,
+        0xed,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x13);
+    ASSERT_EQ(cpu.reg.y, 0xFF);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x03);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
+}
+
+/***************************************************
+************ LD* Index Indirect Tests **************
+***************************************************/
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAIndexIndirectXNonZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    cpu.mem[0x13]   = 0x00;
+    cpu.mem[0x14]   = 0x02;
+    cpu.mem[0x0200] = 0x5a;
+    cpu.reg.x       = 0x13;
+
+    constexpr std::array<std::uint8_t, 2> program{
+        0xa1,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x5a);
+    ASSERT_EQ(cpu.reg.x, 0x13);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x02);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAIndexIndirectXWithZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    cpu.mem[0x13]   = 0x00;
+    cpu.mem[0x14]   = 0x02;
+    cpu.mem[0x0200] = 0x00;
+    cpu.reg.a       = 0xff;
+    cpu.reg.x       = 0x13;
+
+    constexpr std::array<std::uint8_t, 2> program{
+        0xa1,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x13);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x02);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAIndexIndirectXNegative)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    cpu.mem[0x13]   = 0x00;
+    cpu.mem[0x14]   = 0x02;
+    cpu.mem[0x0200] = 0xff;
+    cpu.reg.x       = 0x13;
+
+    constexpr std::array<std::uint8_t, 2> program{
+        0xa1,
+        0x00,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0xff);
+    ASSERT_EQ(cpu.reg.x, 0x13);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x02);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAIndexIndirectXNonZeroPosWrap)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    cpu.mem[0x0000] = 0x00;
+    cpu.mem[0x0001] = 0x02;
+    cpu.mem[0x0200] = 0x5a;
+    cpu.reg.x       = 0x12;
+
+    constexpr std::array<std::uint8_t, 2> program{
+        0xa1,
+        0xee,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x5a);
+    ASSERT_EQ(cpu.reg.x, 0x12);
+    ASSERT_EQ(cpu.reg.y, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x02);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
+}
+
+/***************************************************
+************ LD* Indirect Index Tests **************
+***************************************************/
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAIndirectIndexYNonZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    cpu.mem[0x58]   = 0xff;
+    cpu.mem[0x59]   = 0x01;
+    cpu.mem[0x0200] = 0x5a;
+    cpu.reg.y       = 0x01;
+
+    constexpr std::array<std::uint8_t, 2> program{
+        0xb1,
+        0x58,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x5a);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x01);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x02);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAIndirectIndexYWithZero)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    cpu.mem[0x58]   = 0xff;
+    cpu.mem[0x59]   = 0x01;
+    cpu.mem[0x0200] = 0x00;
+    cpu.reg.y       = 0x01;
+    cpu.reg.a       = 0xff;
+
+    constexpr std::array<std::uint8_t, 2> program{
+        0xb1,
+        0x58,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0x00);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x01);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x02);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
+}
+
+// NOLINTNEXTLINE
+TEST(LDTests, LDAIndirectIndexYWithNegative)
+{
+    // TODO : Load the value in a zeropage mem
+    emulator::Cpu cpu;
+
+    cpu.mem[0x58]   = 0xff;
+    cpu.mem[0x59]   = 0x01;
+    cpu.mem[0x0200] = 0xff;
+    cpu.reg.y       = 0x01;
+
+    constexpr std::array<std::uint8_t, 2> program{
+        0xb1,
+        0x58,
+    };
+    emulator::execute(cpu, program);
+
+    // Registry expect
+    ASSERT_EQ(cpu.reg.a, 0xff);
+    ASSERT_EQ(cpu.reg.x, 0x00);
+    ASSERT_EQ(cpu.reg.y, 0x01);
+    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.pc, 0x02);
+
+    // Flags expect
+    ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
+}
