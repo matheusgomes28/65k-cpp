@@ -366,31 +366,39 @@ std::optional<std::size_t> bne(emulator::Cpu& cpu, std::span<const std::uint8_t>
         return std::nullopt;
     }
     auto const offset = static_cast<std::int8_t>(program[cpu.reg.pc + 1]);
+    cpu.reg.pc += cpu.flags.z ? 0 : offset;
 
-    if (!cpu.flags.z)
-    {
-        cpu.reg.pc += offset;
-    }
-
-    return 2;
+    return std::make_optional<std::size_t>(2);
 }
 
-std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+// TODO : Need to add the cycles based on whether we branch on the
+//        same page or if we cross the page boundary
+//        - 2 cycles if the branch isn't taken
+//        - 3 cycles if the branch is in the same page
+//        - 4 cycles if the branch is on a different page
+//        Can encode this by using a Cpu.n_cycles variable to keep the cycles number
+//        OR we start returning a tuple with the (bytes_consumed, n_cycles) per ins.
+template <bool Value>
+Instruction branch_flag_value(bool emulator::Flags::*flag)
 {
-    // Read 1 byte for the operator
-    if (cpu.reg.pc >= program.size())
+    // TODO : Do we need a return here?
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
     {
-        return std::nullopt;
-    }
+        if ((cpu.reg.pc + 1) >= program.size())
+        {
+            return std::nullopt;
+        }
 
+        auto const offset = ((cpu.flags).*flag == Value) ? static_cast<std::int8_t>(program[cpu.reg.pc + 1]) : 0;
+        return std::make_optional<std::size_t>(2 + offset);
+    };
+}
+
+std::unordered_map<std::uint8_t, Instruction> get_instructions()
+{
     // Byte key indicates which function we need to call
     // to handle the specific instruction
-    const std::unordered_map<std::uint8_t, std::string> testing{
-        {1, "Hello World"},
-        {2, "Hello World"},
-        {3, "Hello World"},
-    };
-    const std::unordered_map<std::uint8_t, Instruction> instructions{{
+    return {{
         {0x00, [](emulator::Cpu&, std::span<const std::uint8_t>) { return std::nullopt; }},
 
 
@@ -437,7 +445,14 @@ std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<const std:
 
         // TODO : finish support for the branching
         // instructions
-        {0xd0, bne},
+        {0xf0, branch_flag_value<true>(&emulator::Flags::z)},
+        {0xd0, branch_flag_value<false>(&emulator::Flags::z)},
+        {0x30, branch_flag_value<true>(&emulator::Flags::n)},
+        {0x10, branch_flag_value<false>(&emulator::Flags::n)},
+        {0xb0, branch_flag_value<true>(&emulator::Flags::c)},
+        {0x90, branch_flag_value<false>(&emulator::Flags::c)},
+        {0x70, branch_flag_value<true>(&emulator::Flags::v)},
+        {0x50, branch_flag_value<false>(&emulator::Flags::v)},
 
         // TODO : finish support for the inc/dec
         // instructions
@@ -447,6 +462,16 @@ std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<const std:
         {0x88, dec_reg(&emulator::Registers::y)},
         {0xca, dec_reg(&emulator::Registers::x)},
     }};
+}
+
+std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<const std::uint8_t> program,
+    std::unordered_map<std::uint8_t, Instruction> instructions)
+{
+    // Read 1 byte for the operator
+    if (cpu.reg.pc >= program.size())
+    {
+        return std::nullopt;
+    }
 
     // Find the correct function to execute here
     auto const command = program[cpu.reg.pc];
@@ -468,9 +493,10 @@ export namespace emulator
 
     bool execute(Cpu& cpu, std::span<const std::uint8_t> program)
     {
+        auto const instructions = get_instructions();
         while (cpu.reg.pc < program.size())
         {
-            auto maybe_increment = execute_next(cpu, program);
+            auto maybe_increment = execute_next(cpu, program, instructions);
             if (!maybe_increment)
             {
                 return false;
