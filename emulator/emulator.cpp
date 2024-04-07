@@ -285,7 +285,7 @@ Instruction st_indirect(std::uint8_t emulator::Registers::*from, std::uint8_t em
     };
 }
 
-Instruction st_zeropage(std::uint9_t emulator::Registers::*from)
+Instruction st_zeropage(std::uint8_t emulator::Registers::*from)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
     {
@@ -422,7 +422,7 @@ std::unordered_map<std::uint8_t, Instruction> get_instructions()
         // TODO : Add more tests for these
         {0x85, st_zeropage(&emulator::Registers::a)},
         {0x8d, st_absolute(&emulator::Registers::a)},
-        {0x91, st_indirect(&emulator::Registers::a)},
+        {0x91, st_indirect(&emulator::Registers::a, &emulator::Registers::x)},
         {0x86, st_zeropage(&emulator::Registers::x)},
         {0x8e, st_absolute(&emulator::Registers::x)},
         {0x84, st_zeropage(&emulator::Registers::y)},
