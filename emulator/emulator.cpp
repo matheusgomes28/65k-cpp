@@ -262,58 +262,63 @@ Instruction transfer_regs(std::uint8_t emulator::Registers::*from, std::uint8_t 
     };
 }
 
-std::optional<std::size_t> sta_ind_y(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+Instruction st_indirect(std::uint8_t emulator::Registers::*from, std::uint8_t emulator::Registers::*add)
 {
-    if ((cpu.reg.pc + 1) >= program.size())
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
     {
-        return std::nullopt;
-    }
-    auto const word_pos = program[cpu.reg.pc + 1];
+        if ((cpu.reg.pc + 1) >= program.size())
+        {
+            return std::nullopt;
+        }
+        auto const word_pos = program[cpu.reg.pc + 1];
 
-    // TODO : This is unsafe
-    auto const lsb = cpu.mem[word_pos];
-    auto const hsb = cpu.mem[word_pos + 1];
-    auto const pos = (hsb << 8) + lsb + cpu.reg.y;
+        // TODO : This is unsafe
+        auto const lsb = cpu.mem[word_pos];
+        auto const hsb = cpu.mem[word_pos + 1];
+        auto const pos = (hsb << 8) + lsb + (cpu.reg).*add;
+        // TODO : What happens if we zeropage overflow?
 
-    // TODO : this needs a bounds check here
-    // can probably return nullopt
-    cpu.mem[pos] = cpu.reg.a;
-    return std::optional<std::size_t>(2);
+        // TODO : this needs a bounds check here
+        // can probably return nullopt
+        cpu.mem[pos] = (cpu.reg).*from;
+        return std::optional<std::size_t>(2);
+    };
 }
 
-std::optional<std::size_t> sta_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+Instruction st_zeropage(std::uint9_t emulator::Registers::*from)
 {
-    // LOAD Value into accumulator
-    if ((cpu.reg.pc + 1) >= program.size())
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
     {
-        return std::nullopt;
-    }
+        // LOAD Value into accumulator
+        if ((cpu.reg.pc + 1) >= program.size())
+        {
+            return std::nullopt;
+        }
 
-    auto const value = program[cpu.reg.pc + 1];
-    cpu.mem[value]   = cpu.reg.a;
+        auto const value = program[cpu.reg.pc + 1];
+        cpu.mem[value]   = (cpu.reg).*from;
 
-    return std::make_optional<std::size_t>(2);
+        return std::make_optional<std::size_t>(2);
+    };
 }
 
-/// This function will emulate the "STA" in absulute addressing
-/// mode. This will store whatever value is in the accumulator
-/// into the memory address obtained from the word address in the
-/// program.
-std::optional<std::size_t> sta_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+Instruction st_absolute(std::uint8_t emulator::Registers::*from)
 {
-    if ((cpu.reg.pc + 2) >= program.size())
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
     {
-        return std::nullopt;
-    }
+        if ((cpu.reg.pc + 2) >= program.size())
+        {
+            return std::nullopt;
+        }
 
-    // (hsb << 8) + lsb convert little endian to the address
-    auto const lsb            = program[cpu.reg.pc + 1];
-    auto const hsb            = program[cpu.reg.pc + 2];
-    cpu.mem[(hsb << 8) | lsb] = cpu.reg.a;
+        // (hsb << 8) + lsb convert little endian to the address
+        auto const lsb            = program[cpu.reg.pc + 1];
+        auto const hsb            = program[cpu.reg.pc + 2];
+        cpu.mem[(hsb << 8) | lsb] = (cpu.reg).*from;
 
-    return std::make_optional<std::size_t>(3);
+        return std::make_optional<std::size_t>(3);
+    };
 }
-
 
 // Compare instructions here
 
@@ -394,6 +399,8 @@ Instruction branch_flag_value(bool emulator::Flags::*flag)
     };
 }
 
+// TODO : provide support for counting the number of cycles passed
+// from the start of the program
 std::unordered_map<std::uint8_t, Instruction> get_instructions()
 {
     // Byte key indicates which function we need to call
@@ -412,9 +419,14 @@ std::unordered_map<std::uint8_t, Instruction> get_instructions()
         // {0x98, transfer_regs(&emulator::Registers::x, &emulator::Registers::s)}, // TXS
 
         // Memory storing functions here
-        {0x85, sta_immediate},
-        {0x8d, sta_absolute},
-        {0x91, sta_ind_y},
+        // TODO : Add more tests for these
+        {0x85, st_zeropage(&emulator::Registers::a)},
+        {0x8d, st_absolute(&emulator::Registers::a)},
+        {0x91, st_indirect(&emulator::Registers::a)},
+        {0x86, st_zeropage(&emulator::Registers::x)},
+        {0x8e, st_absolute(&emulator::Registers::x)},
+        {0x84, st_zeropage(&emulator::Registers::y)},
+        {0x8c, st_absolute(&emulator::Registers::y)},
 
         // TODO : Finish supporting the ld* family
         // of instructions
@@ -443,8 +455,6 @@ std::unordered_map<std::uint8_t, Instruction> get_instructions()
         {0xc5, cmp_zeropage_reg(&emulator::Registers::a)},
         {0xe0, cmp_immediate_reg(&emulator::Registers::x)},
 
-        // TODO : finish support for the branching
-        // instructions
         {0xf0, branch_flag_value<true>(&emulator::Flags::z)},
         {0xd0, branch_flag_value<false>(&emulator::Flags::z)},
         {0x30, branch_flag_value<true>(&emulator::Flags::n)},
