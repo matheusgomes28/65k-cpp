@@ -48,6 +48,7 @@ export namespace emulator
         // registers (A, X, Y, SP, PC) - u8
         Registers reg{};
 
+        // lb-----hb
         // CZID B1VN
         Flags flags{};
 
@@ -222,6 +223,21 @@ std::optional<std::size_t> inc_zeropage(emulator::Cpu& cpu, std::span<const std:
 
     std::uint8_t const pos = program[cpu.reg.pc + 1];
     cpu.mem[pos]++;
+    cpu.flags.z = cpu.mem[pos] == 0;
+    cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
+
+    return std::make_optional<std::size_t>(2);
+}
+
+std::optional<std::size_t> dec_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    std::uint8_t const pos = program[cpu.reg.pc + 1];
+    cpu.mem[pos]--;
     cpu.flags.z = cpu.mem[pos] == 0;
     cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
 
@@ -466,9 +482,10 @@ std::unordered_map<std::uint8_t, Instruction> get_instructions()
 
         // TODO : finish support for the inc/dec
         // instructions
+        {0xe6, inc_zeropage},
         {0xc8, inc_reg(&emulator::Registers::y)},
         {0xe8, inc_reg(&emulator::Registers::x)},
-        {0xe6, inc_zeropage},
+        {0xc6, dec_zeropage},
         {0x88, dec_reg(&emulator::Registers::y)},
         {0xca, dec_reg(&emulator::Registers::x)},
     }};
