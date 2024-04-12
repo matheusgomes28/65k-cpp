@@ -229,6 +229,57 @@ std::optional<std::size_t> inc_zeropage(emulator::Cpu& cpu, std::span<const std:
     return std::make_optional<std::size_t>(2);
 }
 
+std::optional<std::size_t> inc_zeropage_plus_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    std::uint8_t const pos = program[cpu.reg.pc + 1] + cpu.reg.x;
+    cpu.mem[pos]++;
+    cpu.flags.z = cpu.mem[pos] == 0;
+    cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
+
+    return std::make_optional<std::size_t>(2);
+}
+
+std::optional<std::size_t> inc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    std::uint8_t const lsb  = program[cpu.reg.pc + 1];
+    std::uint8_t const hsb  = program[cpu.reg.pc + 2];
+    std::uint16_t const pos = (hsb << 8) | lsb;
+    cpu.mem[pos]++;
+    cpu.flags.z = cpu.mem[pos] == 0;
+    cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
+
+    return std::make_optional<std::size_t>(3);
+}
+
+std::optional<std::size_t> inc_absolute_plus_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    std::uint8_t const lsb      = program[cpu.reg.pc + 1];
+    std::uint8_t const hsb      = program[cpu.reg.pc + 2];
+    std::uint16_t const address = (static_cast<std::uint16_t>(hsb) << 8) | static_cast<std::uint16_t>(lsb);
+    std::uint16_t const pos     = address + static_cast<std::uint16_t>(cpu.reg.x);
+
+    cpu.mem[pos]++;
+    cpu.flags.z = cpu.mem[pos] == 0;
+    cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
+
+    return std::make_optional<std::size_t>(3);
+}
+
 std::optional<std::size_t> dec_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     if ((cpu.reg.pc + 1) >= program.size())
@@ -483,6 +534,9 @@ std::unordered_map<std::uint8_t, Instruction> get_instructions()
         // TODO : finish support for the inc/dec
         // instructions
         {0xe6, inc_zeropage},
+        {0xf6, inc_zeropage_plus_x}, // TODO : Need tests for this
+        {0xee, inc_absolute},
+        {0xfe, inc_absolute_plus_x}, // TODO : Need tests for this
         {0xc8, inc_reg(&emulator::Registers::y)},
         {0xe8, inc_reg(&emulator::Registers::x)},
         {0xc6, dec_zeropage},
