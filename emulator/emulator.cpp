@@ -317,7 +317,6 @@ Instruction dec_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-// TODO : TXS Does not set any flags
 Instruction transfer_regs(std::uint8_t emulator::Registers::*from, std::uint8_t emulator::Registers::*to)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program)
@@ -327,6 +326,14 @@ Instruction transfer_regs(std::uint8_t emulator::Registers::*from, std::uint8_t 
         cpu.flags.n   = (cpu.reg).*to & 0b1000'0000;
         return std::make_optional<std::size_t>(1);
     };
+}
+
+// This function sends the value stored in X to SP and
+// does not set any flags.
+std::optional<std::size_t> txa(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    cpu.reg.sp = cpu.reg.x;
+    return std::make_optional<std::size_t>(1);
 }
 
 Instruction st_indirect(std::uint8_t emulator::Registers::*from, std::uint8_t emulator::Registers::*add)
@@ -482,8 +489,7 @@ std::unordered_map<std::uint8_t, Instruction> get_instructions()
         {0xa8, transfer_regs(&emulator::Registers::a, &emulator::Registers::y)}, // TAY
         {0xaa, transfer_regs(&emulator::Registers::a, &emulator::Registers::x)}, // TAX
         {0xba, transfer_regs(&emulator::Registers::sp, &emulator::Registers::x)}, // TSX
-        // TODO : The TXS does not set any arithmetic flags
-        // {0x98, transfer_regs(&emulator::Registers::x, &emulator::Registers::s)}, // TXS
+        {0x9a, txa},
 
         // Memory storing functions here
         // TODO : Add more tests for these

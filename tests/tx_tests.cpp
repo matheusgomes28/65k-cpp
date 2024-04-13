@@ -157,6 +157,39 @@ TEST(TXTests, TYANoFlags)
 }
 
 // NOLINTNEXTLINE
+TEST(TXTests, TXSNoFlags)
+{
+    // TestData = (program, init y register)
+    using TestData = std::pair<std::array<std::uint8_t, 1>, std::uint8_t>;
+
+    constexpr std::array<TestData, 8> programs{{
+        {{0x9a}, 0x00},
+        {{0x9a}, 0x01},
+        {{0x9a}, 0x02},
+        {{0x9a}, 0x03},
+        {{0x9a}, 0x7F},
+        {{0x9a}, 0x70},
+        {{0x9a}, 0x80},
+        {{0x9a}, 0xFF},
+    }};
+
+    for (auto const& [program, init_x] : programs)
+    {
+        emulator::Cpu cpu;
+        cpu.reg.x = init_x;
+        emulator::execute(cpu, {program.data(), program.size()});
+
+        ASSERT_EQ(cpu.reg.a, 0x00);
+        ASSERT_EQ(cpu.reg.x, init_x);
+        ASSERT_EQ(cpu.reg.y, 0x00);
+        ASSERT_EQ(cpu.reg.sp, init_x);
+        ASSERT_EQ(cpu.reg.pc, 0x01);
+
+        ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
+    }
+}
+
+// NOLINTNEXTLINE
 TEST(TXTests, TXAZeroFlag)
 {
     constexpr std::array<std::uint8_t, 1> program{
