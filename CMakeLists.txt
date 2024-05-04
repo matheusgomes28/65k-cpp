@@ -7,6 +7,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN On)
 
+option(CLOCK_SPEED_MHZ "The clock speed for the processor")
+
 add_subdirectory(emulator)
 add_subdirectory(emulator_app)
 

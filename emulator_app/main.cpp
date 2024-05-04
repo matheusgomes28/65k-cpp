@@ -74,6 +74,8 @@ int main(int argc, char** argv)
 
     emulator::Cpu easy65k;
 
+    std::cout << std::format("The clock speed was set to {}\n", easy65k.clock_speed);
+
     auto const filename = argv[1];
     auto file           = std::ifstream{filename};
 
