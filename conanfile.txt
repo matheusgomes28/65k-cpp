@@ -1,6 +1,5 @@
 [requires]
 gtest/1.13.0
-fmt/10.2.1
 raylib/5.0
 
 [generators]
