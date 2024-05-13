@@ -2,15 +2,22 @@ module;
 
 #include <array>
 #include <bitset>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <iostream>
 #include <optional>
 #include <span>
+#include <thread>
 #include <unordered_map>
+#include <utility>
 
 #include <fmt/format.h>
+
+#ifndef CLOCK_SPEED_MHZ
+#define CLOCK_SPEED_MHZ 1.79
+#endif // CLOCK_SPEED_MHZ
 
 export module emulator;
 
@@ -54,14 +61,28 @@ export namespace emulator
 
         // memory (Zero page/first FF bytes, main memory, vram)
         std::array<std::uint8_t, 0xFFFF> mem{};
+
+        // Clock speed for this particular CPU
+        double clock_speed = CLOCK_SPEED_MHZ;
     };
 } // namespace emulator
 
-using Instruction = std::function<std::optional<std::size_t>(emulator::Cpu&, std::span<const std::uint8_t>)>;
+// TODO : give this a better name
+export struct InstructionConfig
+{
+    std::size_t bytes;
+    std::size_t cycles;
+
+    InstructionConfig(std::size_t bytes_read) : bytes{bytes_read}, cycles{0} {}
+
+    InstructionConfig(std::size_t bytes_read, std::size_t cycles) : bytes{bytes_read}, cycles{cycles} {}
+};
+
+using Instruction = std::function<std::optional<InstructionConfig>(emulator::Cpu&, std::span<const std::uint8_t>)>;
 
 Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 1) >= program.size())
         {
@@ -73,13 +94,13 @@ Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
         cpu.flags.z    = value == 0;
         cpu.flags.n    = value & 0b1000'0000;
 
-        return std::make_optional<std::size_t>(2);
+        return std::make_optional<InstructionConfig>(2);
     };
 }
 
 Instruction ld_zeropage(std::uint8_t emulator::Registers::*reg)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 1) >= program.size())
         {
@@ -94,13 +115,13 @@ Instruction ld_zeropage(std::uint8_t emulator::Registers::*reg)
         cpu.flags.z      = value == 0;
         cpu.flags.n      = value & 0b1000'0000;
 
-        return std::make_optional<std::size_t>(2);
+        return std::make_optional<InstructionConfig>(2);
     };
 }
 
 Instruction ld_zeropage_plus_reg(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 1) >= program.size())
         {
@@ -114,13 +135,13 @@ Instruction ld_zeropage_plus_reg(std::uint8_t emulator::Registers::*to, std::uin
         cpu.flags.z              = value == 0;
         cpu.flags.n              = value & 0b1000'0000;
 
-        return std::make_optional<std::size_t>(2);
+        return std::make_optional<InstructionConfig>(2);
     };
 }
 
 Instruction ld_absolute(std::uint8_t emulator::Registers::*to)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 2) >= program.size())
         {
@@ -136,13 +157,13 @@ Instruction ld_absolute(std::uint8_t emulator::Registers::*to)
         (cpu.reg).*to = value;
         cpu.flags.z   = value == 0;
         cpu.flags.n   = value & 0b1000'0000;
-        return std::make_optional<std::size_t>(3);
+        return std::make_optional<InstructionConfig>(3);
     };
 }
 
 Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 2) >= program.size())
         {
@@ -159,7 +180,7 @@ Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::*to, std::uin
         (cpu.reg).*to = value;
         cpu.flags.z   = value == 0;
         cpu.flags.n   = value & 0b1000'0000;
-        return std::make_optional<std::size_t>(3);
+        return std::make_optional<InstructionConfig>(3);
     };
 }
 
@@ -167,7 +188,7 @@ Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::*to, std::uin
 // the value ad zeropage + x as a position
 Instruction ld_index_indirect(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 1) >= program.size())
         {
@@ -186,13 +207,13 @@ Instruction ld_index_indirect(std::uint8_t emulator::Registers::*to, std::uint8_
         (cpu.reg).*to = value;
         cpu.flags.z   = value == 0;
         cpu.flags.n   = value & 0b1000'0000;
-        return std::make_optional<std::size_t>(2);
+        return std::make_optional<InstructionConfig>(2);
     };
 }
 
 Instruction ld_indirect_index(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 1) >= program.size())
         {
@@ -210,11 +231,11 @@ Instruction ld_indirect_index(std::uint8_t emulator::Registers::*to, std::uint8_
         (cpu.reg).*to = value;
         cpu.flags.z   = value == 0;
         cpu.flags.n   = value & 0b1000'0000;
-        return std::make_optional<std::size_t>(2);
+        return std::make_optional<InstructionConfig>(2);
     };
 }
 
-std::optional<std::size_t> inc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+std::optional<InstructionConfig> inc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     if ((cpu.reg.pc + 1) >= program.size())
     {
@@ -226,10 +247,10 @@ std::optional<std::size_t> inc_zeropage(emulator::Cpu& cpu, std::span<const std:
     cpu.flags.z = cpu.mem[pos] == 0;
     cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
 
-    return std::make_optional<std::size_t>(2);
+    return std::make_optional<InstructionConfig>(2, 5);
 }
 
-std::optional<std::size_t> inc_zeropage_plus_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+std::optional<InstructionConfig> inc_zeropage_plus_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     if ((cpu.reg.pc + 1) >= program.size())
     {
@@ -241,10 +262,10 @@ std::optional<std::size_t> inc_zeropage_plus_x(emulator::Cpu& cpu, std::span<con
     cpu.flags.z = cpu.mem[pos] == 0;
     cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
 
-    return std::make_optional<std::size_t>(2);
+    return std::make_optional<InstructionConfig>(2, 6);
 }
 
-std::optional<std::size_t> inc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+std::optional<InstructionConfig> inc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     if ((cpu.reg.pc + 2) >= program.size())
     {
@@ -258,10 +279,10 @@ std::optional<std::size_t> inc_absolute(emulator::Cpu& cpu, std::span<const std:
     cpu.flags.z = cpu.mem[pos] == 0;
     cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
 
-    return std::make_optional<std::size_t>(3);
+    return std::make_optional<InstructionConfig>(3, 6);
 }
 
-std::optional<std::size_t> inc_absolute_plus_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+std::optional<InstructionConfig> inc_absolute_plus_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     if ((cpu.reg.pc + 2) >= program.size())
     {
@@ -277,10 +298,10 @@ std::optional<std::size_t> inc_absolute_plus_x(emulator::Cpu& cpu, std::span<con
     cpu.flags.z = cpu.mem[pos] == 0;
     cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
 
-    return std::make_optional<std::size_t>(3);
+    return std::make_optional<InstructionConfig>(3, 7);
 }
 
-std::optional<std::size_t> dec_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+std::optional<InstructionConfig> dec_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     if ((cpu.reg.pc + 1) >= program.size())
     {
@@ -292,7 +313,7 @@ std::optional<std::size_t> dec_zeropage(emulator::Cpu& cpu, std::span<const std:
     cpu.flags.z = cpu.mem[pos] == 0;
     cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
 
-    return std::make_optional<std::size_t>(2);
+    return std::make_optional<InstructionConfig>(2);
 }
 
 Instruction inc_reg(std::uint8_t emulator::Registers::*reg)
@@ -302,7 +323,7 @@ Instruction inc_reg(std::uint8_t emulator::Registers::*reg)
         ((cpu.reg).*reg)++;
         cpu.flags.n = (cpu.reg).*reg & 0b1000'0000;
         cpu.flags.z = (cpu.reg).*reg == 0;
-        return std::make_optional<std::size_t>(1);
+        return std::make_optional<InstructionConfig>(1, 2);
     };
 }
 
@@ -313,7 +334,7 @@ Instruction dec_reg(std::uint8_t emulator::Registers::*reg)
         ((cpu.reg).*reg)--;
         cpu.flags.n = (cpu.reg).*reg & 0b1000'0000;
         cpu.flags.z = (cpu.reg).*reg == 0;
-        return std::make_optional<std::size_t>(1);
+        return std::make_optional<InstructionConfig>(1, 2);
     };
 }
 
@@ -324,21 +345,21 @@ Instruction transfer_regs(std::uint8_t emulator::Registers::*from, std::uint8_t 
         (cpu.reg).*to = (cpu.reg).*from;
         cpu.flags.z   = (cpu.reg).*to == 0;
         cpu.flags.n   = (cpu.reg).*to & 0b1000'0000;
-        return std::make_optional<std::size_t>(1);
+        return std::make_optional<InstructionConfig>(1);
     };
 }
 
 // This function sends the value stored in X to SP and
 // does not set any flags.
-std::optional<std::size_t> txa(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+std::optional<InstructionConfig> txa(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     cpu.reg.sp = cpu.reg.x;
-    return std::make_optional<std::size_t>(1);
+    return std::make_optional<InstructionConfig>(1);
 }
 
 Instruction st_indirect(std::uint8_t emulator::Registers::*from, std::uint8_t emulator::Registers::*add)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 1) >= program.size())
         {
@@ -355,13 +376,13 @@ Instruction st_indirect(std::uint8_t emulator::Registers::*from, std::uint8_t em
         // TODO : this needs a bounds check here
         // can probably return nullopt
         cpu.mem[pos] = (cpu.reg).*from;
-        return std::optional<std::size_t>(2);
+        return std::make_optional<InstructionConfig>(2, 6);
     };
 }
 
 Instruction st_zeropage(std::uint8_t emulator::Registers::*from)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         // LOAD Value into accumulator
         if ((cpu.reg.pc + 1) >= program.size())
@@ -372,13 +393,13 @@ Instruction st_zeropage(std::uint8_t emulator::Registers::*from)
         auto const value = program[cpu.reg.pc + 1];
         cpu.mem[value]   = (cpu.reg).*from;
 
-        return std::make_optional<std::size_t>(2);
+        return std::make_optional<InstructionConfig>(2, 3);
     };
 }
 
 Instruction st_absolute(std::uint8_t emulator::Registers::*from)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 2) >= program.size())
         {
@@ -390,7 +411,7 @@ Instruction st_absolute(std::uint8_t emulator::Registers::*from)
         auto const hsb            = program[cpu.reg.pc + 2];
         cpu.mem[(hsb << 8) | lsb] = (cpu.reg).*from;
 
-        return std::make_optional<std::size_t>(3);
+        return std::make_optional<InstructionConfig>(3, 4);
     };
 }
 
@@ -400,7 +421,7 @@ Instruction st_absolute(std::uint8_t emulator::Registers::*from)
 /// value in the next address in the program array
 Instruction cmp_immediate_reg(std::uint8_t emulator::Registers::*reg)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 1) >= program.size())
         {
@@ -413,13 +434,13 @@ Instruction cmp_immediate_reg(std::uint8_t emulator::Registers::*reg)
         cpu.flags.z           = comparison == 0; // Negative flag
         cpu.flags.c           = (cpu.reg).*reg >= value;
 
-        return std::make_optional<std::size_t>(2);
+        return std::make_optional<InstructionConfig>(2);
     };
 }
 
 Instruction cmp_zeropage_reg(std::uint8_t emulator::Registers::*reg)
 {
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 1) >= program.size())
         {
@@ -433,12 +454,12 @@ Instruction cmp_zeropage_reg(std::uint8_t emulator::Registers::*reg)
         cpu.flags.z           = comparison == 0; // Negative flag
         cpu.flags.n           = (cpu.reg).*reg >= value;
 
-        return std::make_optional<std::size_t>(2);
+        return std::make_optional<InstructionConfig>(2);
     };
 }
 
 // Branching functions here
-std::optional<std::size_t> bne(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+std::optional<InstructionConfig> bne(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     if ((cpu.reg.pc + 1) >= program.size())
     {
@@ -447,7 +468,7 @@ std::optional<std::size_t> bne(emulator::Cpu& cpu, std::span<const std::uint8_t>
     auto const offset = static_cast<std::int8_t>(program[cpu.reg.pc + 1]);
     cpu.reg.pc += cpu.flags.z ? 0 : offset;
 
-    return std::make_optional<std::size_t>(2);
+    return std::make_optional<InstructionConfig>(2);
 }
 
 // TODO : Need to add the cycles based on whether we branch on the
@@ -461,7 +482,7 @@ template <bool Value>
 Instruction branch_flag_value(bool emulator::Flags::*flag)
 {
     // TODO : Do we need a return here?
-    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<std::size_t>
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         if ((cpu.reg.pc + 1) >= program.size())
         {
@@ -469,7 +490,7 @@ Instruction branch_flag_value(bool emulator::Flags::*flag)
         }
 
         auto const offset = ((cpu.flags).*flag == Value) ? static_cast<std::int8_t>(program[cpu.reg.pc + 1]) : 0;
-        return std::make_optional<std::size_t>(2 + offset);
+        return std::make_optional<InstructionConfig>(2 + offset);
     };
 }
 
@@ -551,7 +572,7 @@ std::unordered_map<std::uint8_t, Instruction> get_instructions()
     }};
 }
 
-std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<const std::uint8_t> program,
+std::optional<InstructionConfig> execute_next(emulator::Cpu& cpu, std::span<const std::uint8_t> program,
     std::unordered_map<std::uint8_t, Instruction> instructions)
 {
     // Read 1 byte for the operator
@@ -578,20 +599,38 @@ std::optional<std::size_t> execute_next(emulator::Cpu& cpu, std::span<const std:
 export namespace emulator
 {
 
-    bool execute(Cpu& cpu, std::span<const std::uint8_t> program)
+    std::size_t execute(Cpu& cpu, std::span<const std::uint8_t> program)
     {
         auto const instructions = get_instructions();
+        std::size_t n_cycles    = 0;
         while (cpu.reg.pc < program.size())
         {
+            auto const time_now  = std::chrono::high_resolution_clock::now();
             auto maybe_increment = execute_next(cpu, program, instructions);
             if (!maybe_increment)
             {
                 return false;
             }
 
-            cpu.reg.pc += *maybe_increment;
+            cpu.reg.pc += maybe_increment->bytes;
+
+            // TODO : wait for the time the instruction
+            // should actually take here
+            double const cycles_taken = maybe_increment->cycles;
+            n_cycles += cycles_taken;
+
+            double const cycles_per_second = cpu.clock_speed * 1'000'000;
+            double const time_to_wait_s    = cycles_taken / cycles_per_second;
+
+            // TODO : use a high resolution clock to wait for
+            // the right amount of time
+            auto const time_then         = std::chrono::high_resolution_clock::now();
+            auto const cpp_time_overhead = time_then - time_now;
+            auto const wait_duration =
+                std::chrono::nanoseconds{static_cast<std::size_t>(time_to_wait_s * 1'000'000'000)};
+            std::this_thread::sleep_for(wait_duration - cpp_time_overhead);
         }
 
-        return true;
+        return n_cycles;
     }
 } // namespace emulator

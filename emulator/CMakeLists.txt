@@ -8,4 +8,9 @@ target_sources(emulator
       emulator.cpp
 )
 
+if (CLOCK_SPEED_MHZ)
+  message(STATUS "The clock speed was set to ${CLOCK_SPEED_MHZ}")
+  target_compile_definitions(emulator PRIVATE CLOCK_SPEED_MHZ=${CLOCK_SPEED_MHZ})
+endif()
+
 target_link_libraries(emulator PRIVATE fmt::fmt)

@@ -8,6 +8,16 @@ import emulator;
 #include <utility>
 
 // NOLINTNEXTLINE
+TEST(IncrementTests, INXCorrectCycles)
+{
+    const std::array<std::uint8_t, 1> program{0xe8};
+
+    emulator::Cpu cpu;
+    auto const cycles = emulator::execute(cpu, {program.data(), program.size()});
+    ASSERT_EQ(cycles, 2);
+}
+
+// NOLINTNEXTLINE
 TEST(IncrementTests, INXNoFlags)
 {
     // TestData = (program, init_x_register)
