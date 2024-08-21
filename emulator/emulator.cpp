@@ -5,10 +5,12 @@ import profiler;
 // #endif // BUILD_PROFILER
 
 #include <array>
+#include <algorithm>
 #include <bitset>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -23,6 +25,8 @@ import profiler;
 #ifndef CLOCK_SPEED_MHZ
 #define CLOCK_SPEED_MHZ 1.79
 #endif // CLOCK_SPEED_MHZ
+
+#include <fmt/format.h>
 
 export module emulator;
 
@@ -56,6 +60,22 @@ struct ProfileBook
 
 export namespace emulator
 {
+    class OpcodeNotSupported: public std::exception
+    {
+    public:
+        OpcodeNotSupported(std::string opcode)
+            : _error_msg{"opcode not supported: " + opcode}
+        {
+        }
+
+        const char* what() const throw() override
+        {
+            return _error_msg.c_str();
+        }
+
+    private:
+        std::string _error_msg;
+    };
 
     struct Registers
     {
@@ -555,85 +575,81 @@ Instruction branch_flag_value(bool emulator::Flags::*flag)
 
 // TODO : provide support for counting the number of cycles passed
 // from the start of the program
-std::unordered_map<std::uint8_t, Instruction> get_instructions(emulator::Cpu& cpu)
+std::array<Instruction, 256> get_instructions(emulator::Cpu& cpu)
 {
     ENABLE_PROFILER(cpu);
     // Byte key indicates which function we need to call
     // to handle the specific instruction
-    return {{
-        {0x00, [](emulator::Cpu&, std::span<const std::uint8_t>) { return std::nullopt; }},
+// using Instruction = std::function<std::optional<std::size_t>(emulator::Cpu&, std::span<const std::uint8_t>)>;
+    std::array<Instruction, 256> supported_instructions{};
+    for (std::size_t i = 0; i < supported_instructions.size(); ++i)
+    {
+        supported_instructions[i] = [=](emulator::Cpu&, std::span<const std::uint8_t>) -> std::optional<std::size_t>{
+            throw emulator::OpcodeNotSupported(fmt::format("{0:#x}", i));
+        };
+    }
+    // make sure that all default elemets of supported_instructions
+    // are functions that will raise an error
+    
+    // Supported instructions
+    supported_instructions[0x00] = [](emulator::Cpu&, std::span<const std::uint8_t>) { return std::nullopt; };
+    supported_instructions[0x8a] = transfer_regs(&emulator::Registers::x, &emulator::Registers::a);
+    supported_instructions[0x98] = transfer_regs(&emulator::Registers::y, &emulator::Registers::a);
+    supported_instructions[0xa8] = transfer_regs(&emulator::Registers::a, &emulator::Registers::y);
+    supported_instructions[0xaa] = transfer_regs(&emulator::Registers::a, &emulator::Registers::x);
+    supported_instructions[0xba] = transfer_regs(&emulator::Registers::sp, &emulator::Registers::x);
+    supported_instructions[0x9a] = txa;
+    supported_instructions[0x85] = st_zeropage(&emulator::Registers::a);
+    supported_instructions[0x8d] = st_absolute(&emulator::Registers::a);
+    supported_instructions[0x91] = st_indirect(&emulator::Registers::a, &emulator::Registers::y);
+    supported_instructions[0x86] = st_zeropage(&emulator::Registers::x);
+    supported_instructions[0x8e] = st_absolute(&emulator::Registers::x);
+    supported_instructions[0x84] = st_zeropage(&emulator::Registers::y);
+    supported_instructions[0x8c] = st_absolute(&emulator::Registers::y);
+    supported_instructions[0xa9] = ld_immediate(&emulator::Registers::a);
+    supported_instructions[0xa5] = ld_zeropage(&emulator::Registers::a);
+    supported_instructions[0xb5] = ld_zeropage_plus_reg(&emulator::Registers::a, &emulator::Registers::x);
+    supported_instructions[0xbd] = ld_absolute_plus_reg(&emulator::Registers::a, &emulator::Registers::x);
+    supported_instructions[0xb9] = ld_absolute_plus_reg(&emulator::Registers::a, &emulator::Registers::y);
+    supported_instructions[0xa1] = ld_index_indirect(&emulator::Registers::a, &emulator::Registers::x);
+    supported_instructions[0xb1] = ld_indirect_index(&emulator::Registers::a, &emulator::Registers::y);
+    supported_instructions[0xad] = ld_absolute(&emulator::Registers::a);
+    supported_instructions[0xa2] = ld_immediate(&emulator::Registers::x);
+    supported_instructions[0xa6] = ld_zeropage(&emulator::Registers::x);
+    supported_instructions[0xb6] = ld_zeropage_plus_reg(&emulator::Registers::x, &emulator::Registers::y);
+    supported_instructions[0xae] = ld_absolute(&emulator::Registers::x);
+    supported_instructions[0xbe] = ld_absolute_plus_reg(&emulator::Registers::x, &emulator::Registers::y);
+    supported_instructions[0xa0] = ld_immediate(&emulator::Registers::y);
+    supported_instructions[0xa4] = ld_zeropage(&emulator::Registers::y);
+    supported_instructions[0xb4] = ld_zeropage_plus_reg(&emulator::Registers::y, &emulator::Registers::x);
+    supported_instructions[0xbc] = ld_absolute_plus_reg(&emulator::Registers::y, &emulator::Registers::x);
+    supported_instructions[0xac] = ld_absolute(&emulator::Registers::y);
+    supported_instructions[0xc0] = cmp_immediate_reg(&emulator::Registers::y);
+    supported_instructions[0xc5] = cmp_zeropage_reg(&emulator::Registers::a);
+    supported_instructions[0xe0] = cmp_immediate_reg(&emulator::Registers::x);
+    supported_instructions[0xf0] = branch_flag_value<true>(&emulator::Flags::z);
+    supported_instructions[0xd0] = branch_flag_value<false>(&emulator::Flags::z);
+    supported_instructions[0x30] = branch_flag_value<true>(&emulator::Flags::n);
+    supported_instructions[0x10] = branch_flag_value<false>(&emulator::Flags::n);
+    supported_instructions[0xb0] = branch_flag_value<true>(&emulator::Flags::c);
+    supported_instructions[0x90] = branch_flag_value<false>(&emulator::Flags::c);
+    supported_instructions[0x70] = branch_flag_value<true>(&emulator::Flags::v);
+    supported_instructions[0x50] = branch_flag_value<false>(&emulator::Flags::v);
+    supported_instructions[0xe6] = inc_zeropage;
+    supported_instructions[0xf6] = inc_zeropage_plus_x;
+    supported_instructions[0xee] = inc_absolute;
+    supported_instructions[0xfe] = inc_absolute_plus_x;
+    supported_instructions[0xc8] = inc_reg(&emulator::Registers::y);
+    supported_instructions[0xe8] = inc_reg(&emulator::Registers::x);
+    supported_instructions[0xc6] = dec_zeropage;
+    supported_instructions[0x88] = dec_reg(&emulator::Registers::y);
+    supported_instructions[0xca] = dec_reg(&emulator::Registers::x);
 
-
-        // Transferring instrucitons here
-        {0x8a, transfer_regs(&emulator::Registers::x, &emulator::Registers::a)}, // TXA
-        {0x98, transfer_regs(&emulator::Registers::y, &emulator::Registers::a)}, // TYA
-        {0xa8, transfer_regs(&emulator::Registers::a, &emulator::Registers::y)}, // TAY
-        {0xaa, transfer_regs(&emulator::Registers::a, &emulator::Registers::x)}, // TAX
-        {0xba, transfer_regs(&emulator::Registers::sp, &emulator::Registers::x)}, // TSX
-        {0x9a, txa},
-
-        // Memory storing functions here
-        // TODO : Add more tests for these
-        {0x85, st_zeropage(&emulator::Registers::a)},
-        {0x8d, st_absolute(&emulator::Registers::a)},
-        {0x91, st_indirect(&emulator::Registers::a, &emulator::Registers::y)},
-        {0x86, st_zeropage(&emulator::Registers::x)},
-        {0x8e, st_absolute(&emulator::Registers::x)},
-        {0x84, st_zeropage(&emulator::Registers::y)},
-        {0x8c, st_absolute(&emulator::Registers::y)},
-
-        // TODO : Finish supporting the ld* family
-        // of instructions
-        {0xa9, ld_immediate(&emulator::Registers::a)},
-        {0xa5, ld_zeropage(&emulator::Registers::a)},
-        {0xb5, ld_zeropage_plus_reg(&emulator::Registers::a, &emulator::Registers::x)},
-        {0xbd, ld_absolute_plus_reg(&emulator::Registers::a, &emulator::Registers::x)},
-        {0xb9, ld_absolute_plus_reg(&emulator::Registers::a, &emulator::Registers::y)},
-        {0xa1, ld_index_indirect(&emulator::Registers::a, &emulator::Registers::x)},
-        {0xb1, ld_indirect_index(&emulator::Registers::a, &emulator::Registers::y)},
-        {0xad, ld_absolute(&emulator::Registers::a)},
-        {0xa2, ld_immediate(&emulator::Registers::x)},
-        {0xa6, ld_zeropage(&emulator::Registers::x)},
-        {0xb6, ld_zeropage_plus_reg(&emulator::Registers::x, &emulator::Registers::y)},
-        {0xae, ld_absolute(&emulator::Registers::x)},
-        {0xbe, ld_absolute_plus_reg(&emulator::Registers::x, &emulator::Registers::y)},
-        {0xa0, ld_immediate(&emulator::Registers::y)},
-        {0xa4, ld_zeropage(&emulator::Registers::y)},
-        {0xb4, ld_zeropage_plus_reg(&emulator::Registers::y, &emulator::Registers::x)},
-        {0xbc, ld_absolute_plus_reg(&emulator::Registers::y, &emulator::Registers::x)},
-        {0xac, ld_absolute(&emulator::Registers::y)},
-
-        // TODO : finish support for the cmp* family
-        // of instructions
-        {0xc0, cmp_immediate_reg(&emulator::Registers::y)},
-        {0xc5, cmp_zeropage_reg(&emulator::Registers::a)},
-        {0xe0, cmp_immediate_reg(&emulator::Registers::x)},
-
-        {0xf0, branch_flag_value<true>(&emulator::Flags::z)},
-        {0xd0, branch_flag_value<false>(&emulator::Flags::z)},
-        {0x30, branch_flag_value<true>(&emulator::Flags::n)},
-        {0x10, branch_flag_value<false>(&emulator::Flags::n)},
-        {0xb0, branch_flag_value<true>(&emulator::Flags::c)},
-        {0x90, branch_flag_value<false>(&emulator::Flags::c)},
-        {0x70, branch_flag_value<true>(&emulator::Flags::v)},
-        {0x50, branch_flag_value<false>(&emulator::Flags::v)},
-
-        // TODO : finish support for the inc/dec
-        // instructions
-        {0xe6, inc_zeropage},
-        {0xf6, inc_zeropage_plus_x}, // TODO : Need tests for this
-        {0xee, inc_absolute},
-        {0xfe, inc_absolute_plus_x}, // TODO : Need tests for this
-        {0xc8, inc_reg(&emulator::Registers::y)},
-        {0xe8, inc_reg(&emulator::Registers::x)},
-        {0xc6, dec_zeropage},
-        {0x88, dec_reg(&emulator::Registers::y)},
-        {0xca, dec_reg(&emulator::Registers::x)},
-    }};
+    return supported_instructions;
 }
 
 std::optional<InstructionConfig> execute_next(emulator::Cpu& cpu, std::span<const std::uint8_t> program,
-    std::unordered_map<std::uint8_t, Instruction> instructions)
+    std::array<Instruction, 256> instructions)
 {
     ENABLE_PROFILER(cpu);
     // Read 1 byte for the operator
@@ -644,17 +660,18 @@ std::optional<InstructionConfig> execute_next(emulator::Cpu& cpu, std::span<cons
 
     // Find the correct function to execute here
     auto const command = program[cpu.reg.pc];
-    auto const found   = instructions.find(command);
+    
 
-    if (found != end(instructions))
+    auto const instruction   = instructions[command];
+    try
     {
-        // Execute the function
-        return found->second(cpu, program);
+        return instruction(cpu, program);
     }
-
-    // Instruction not supported here
-    // unsupported command
-    return std::nullopt;
+    catch (emulator::OpcodeNotSupported const& e)
+    {
+        std::cout << e.what() << std::endl;
+        return std::nullopt;
+    }
 }
 
 export namespace emulator
