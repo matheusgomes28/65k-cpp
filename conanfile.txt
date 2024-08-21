@@ -1,4 +1,5 @@
 [requires]
+fmt/11.0.2
 gtest/1.13.0
 raylib/5.0
 

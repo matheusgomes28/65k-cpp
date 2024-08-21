@@ -1,3 +1,5 @@
+find_package(fmt REQUIRED)
+
 add_library(emulator)
 target_sources(emulator
   PUBLIC
@@ -12,3 +14,5 @@ if(BUILD_PROFILER)
 else()
   message(STATUS "Profiler not build")
 endif()
+
+target_link_libraries(emulator PRIVATE fmt::fmt)
