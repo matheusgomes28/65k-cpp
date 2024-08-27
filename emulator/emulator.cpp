@@ -4,8 +4,8 @@ module;
 import profiler;
 // #endif // BUILD_PROFILER
 
-#include <array>
 #include <algorithm>
+#include <array>
 #include <bitset>
 #include <chrono>
 #include <cstddef>
@@ -60,13 +60,10 @@ struct ProfileBook
 
 export namespace emulator
 {
-    class OpcodeNotSupported: public std::exception
+    class OpcodeNotSupported : public std::exception
     {
     public:
-        OpcodeNotSupported(std::string opcode)
-            : _error_msg{"opcode not supported: " + opcode}
-        {
-        }
+        OpcodeNotSupported(std::string opcode) : _error_msg{"opcode not supported: " + opcode} {}
 
         const char* what() const throw() override
         {
@@ -573,24 +570,186 @@ Instruction branch_flag_value(bool emulator::Flags::*flag)
     };
 }
 
-// TODO : provide support for counting the number of cycles passed
-// from the start of the program
-std::array<Instruction, 256> get_instructions(emulator::Cpu& cpu)
+// Logical operations
+std::optional<std::size_t> or_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const value = program[cpu.reg.pc + 1];
+    cpu.reg.a        = cpu.reg.a | value;
+    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
+    return std::make_optional<std::size_t>(2);
+}
+
+std::optional<std::size_t> or_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const offset = program[cpu.reg.pc + 1];
+    auto const value  = cpu.mem[offset];
+
+    cpu.reg.a   = cpu.reg.a | value;
+    cpu.flags.n = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z = !static_cast<bool>(cpu.reg.a);
+    return std::make_optional<std::size_t>(2);
+}
+
+std::optional<std::size_t> or_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const zp_offset = program[cpu.reg.pc + 1];
+    auto const offset    = static_cast<std::uint8_t>(zp_offset + cpu.reg.x);
+    auto const value     = cpu.mem[offset];
+
+    cpu.reg.a   = cpu.reg.a | value;
+    cpu.flags.n = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z = !static_cast<bool>(cpu.reg.a);
+    return std::make_optional<std::size_t>(2);
+}
+
+std::optional<std::size_t> or_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    // (hsb << 8) + lsb convert little endian to the address
+    auto const lsb  = program[cpu.reg.pc + 1];
+    auto const hsb  = program[cpu.reg.pc + 2];
+    auto const addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
+
+    auto const value = cpu.mem[addr];
+    cpu.reg.a        = cpu.reg.a | value;
+    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
+
+    return std::make_optional<std::size_t>(3);
+}
+
+// TODO : merge this with the abs y function, same code
+std::optional<std::size_t> or_acc_absolute_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    // (hsb << 8) + lsb convert little endian to the address
+    auto const lsb  = program[cpu.reg.pc + 1];
+    auto const hsb  = program[cpu.reg.pc + 2];
+    auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
+    auto const addr = static_cast<std::uint16_t>(abs_addr + cpu.reg.x);
+    // TOOD : add 1 to cycle if this addr crosses page boundary
+
+    auto const value = cpu.mem[addr];
+    cpu.reg.a        = cpu.reg.a | value;
+    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
+
+    return std::make_optional<std::size_t>(3);
+}
+
+// TODO : merge this with the abs x function, same code
+std::optional<std::size_t> or_acc_absolute_y(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    // (hsb << 8) + lsb convert little endian to the address
+    auto const lsb  = program[cpu.reg.pc + 1];
+    auto const hsb  = program[cpu.reg.pc + 2];
+    auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
+    auto const addr = static_cast<std::uint16_t>(abs_addr + cpu.reg.y);
+    // TOOD : add 1 to cycle if this addr crosses page boundary
+
+    auto const value = cpu.mem[addr];
+    cpu.reg.a        = cpu.reg.a | value;
+    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
+
+    return std::make_optional<std::size_t>(3);
+}
+
+std::optional<std::size_t> or_acc_index_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    // (hsb << 8) + lsb convert little endian to the address
+    auto const zp_addr = static_cast<std::uint8_t>(program[cpu.reg.pc + 1] + cpu.reg.x);
+
+    auto const lsb  = cpu.mem[static_cast<std::uint8_t>(zp_addr + 1)];
+    auto const hsb  = cpu.mem[static_cast<std::uint8_t>(zp_addr + 2)];
+    auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
+
+    auto const value = cpu.mem[abs_addr];
+    cpu.reg.a        = cpu.reg.a | value;
+    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
+
+    return std::make_optional<std::size_t>(2);
+}
+
+std::optional<std::size_t> or_acc_indirect_index(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const zp_addr = program[cpu.reg.pc + 1];
+    auto const lsb  = cpu.mem[static_cast<std::uint8_t>(zp_addr + 1)];
+    auto const hsb  = cpu.mem[static_cast<std::uint8_t>(zp_addr + 2)];
+    auto const abs_addr = static_cast<std::uint16_t>(((hsb << 8) | lsb) +  cpu.reg.y);
+
+    auto const value = cpu.mem[abs_addr];
+    cpu.reg.a        = cpu.reg.a | value;
+    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
+
+    return std::make_optional<std::size_t>(2);
+}
+
+// TODO : provide support for counting the number of cycles passed
+// from the start of the program
+std::array<Instruction, 256> get_instructions()
+{
     // Byte key indicates which function we need to call
     // to handle the specific instruction
-// using Instruction = std::function<std::optional<std::size_t>(emulator::Cpu&, std::span<const std::uint8_t>)>;
+    // using Instruction = std::function<std::optional<std::size_t>(emulator::Cpu&, std::span<const std::uint8_t>)>;
     std::array<Instruction, 256> supported_instructions{};
     for (std::size_t i = 0; i < supported_instructions.size(); ++i)
     {
-        supported_instructions[i] = [=](emulator::Cpu&, std::span<const std::uint8_t>) -> std::optional<std::size_t>{
-            throw emulator::OpcodeNotSupported(fmt::format("{0:#x}", i));
-        };
+        supported_instructions[i] = [=](emulator::Cpu&, std::span<const std::uint8_t>) -> std::optional<std::size_t>
+        { throw emulator::OpcodeNotSupported(fmt::format("{0:#x}", i)); };
     }
     // make sure that all default elemets of supported_instructions
     // are functions that will raise an error
-    
+
     // Supported instructions
     supported_instructions[0x00] = [](emulator::Cpu&, std::span<const std::uint8_t>) { return std::nullopt; };
     supported_instructions[0x8a] = transfer_regs(&emulator::Registers::x, &emulator::Registers::a);
@@ -599,6 +758,7 @@ std::array<Instruction, 256> get_instructions(emulator::Cpu& cpu)
     supported_instructions[0xaa] = transfer_regs(&emulator::Registers::a, &emulator::Registers::x);
     supported_instructions[0xba] = transfer_regs(&emulator::Registers::sp, &emulator::Registers::x);
     supported_instructions[0x9a] = txa;
+
     supported_instructions[0x85] = st_zeropage(&emulator::Registers::a);
     supported_instructions[0x8d] = st_absolute(&emulator::Registers::a);
     supported_instructions[0x91] = st_indirect(&emulator::Registers::a, &emulator::Registers::y);
@@ -606,6 +766,7 @@ std::array<Instruction, 256> get_instructions(emulator::Cpu& cpu)
     supported_instructions[0x8e] = st_absolute(&emulator::Registers::x);
     supported_instructions[0x84] = st_zeropage(&emulator::Registers::y);
     supported_instructions[0x8c] = st_absolute(&emulator::Registers::y);
+
     supported_instructions[0xa9] = ld_immediate(&emulator::Registers::a);
     supported_instructions[0xa5] = ld_zeropage(&emulator::Registers::a);
     supported_instructions[0xb5] = ld_zeropage_plus_reg(&emulator::Registers::a, &emulator::Registers::x);
@@ -624,9 +785,17 @@ std::array<Instruction, 256> get_instructions(emulator::Cpu& cpu)
     supported_instructions[0xb4] = ld_zeropage_plus_reg(&emulator::Registers::y, &emulator::Registers::x);
     supported_instructions[0xbc] = ld_absolute_plus_reg(&emulator::Registers::y, &emulator::Registers::x);
     supported_instructions[0xac] = ld_absolute(&emulator::Registers::y);
+
+    // This is the immediate mode compares to registers
+    supported_instructions[0xc9] = cmp_immediate_reg(&emulator::Registers::a); // TODO : test
     supported_instructions[0xc0] = cmp_immediate_reg(&emulator::Registers::y);
-    supported_instructions[0xc5] = cmp_zeropage_reg(&emulator::Registers::a);
     supported_instructions[0xe0] = cmp_immediate_reg(&emulator::Registers::x);
+
+    // TODO : support for compare zeropage simple
+    supported_instructions[0xc5] = cmp_zeropage_reg(&emulator::Registers::a);
+    supported_instructions[0xe4] = cmp_zeropage_reg(&emulator::Registers::x); // TODO : test
+    supported_instructions[0xc4] = cmp_zeropage_reg(&emulator::Registers::y); // TODO : test
+
     supported_instructions[0xf0] = branch_flag_value<true>(&emulator::Flags::z);
     supported_instructions[0xd0] = branch_flag_value<false>(&emulator::Flags::z);
     supported_instructions[0x30] = branch_flag_value<true>(&emulator::Flags::n);
@@ -635,15 +804,27 @@ std::array<Instruction, 256> get_instructions(emulator::Cpu& cpu)
     supported_instructions[0x90] = branch_flag_value<false>(&emulator::Flags::c);
     supported_instructions[0x70] = branch_flag_value<true>(&emulator::Flags::v);
     supported_instructions[0x50] = branch_flag_value<false>(&emulator::Flags::v);
+
     supported_instructions[0xe6] = inc_zeropage;
     supported_instructions[0xf6] = inc_zeropage_plus_x;
     supported_instructions[0xee] = inc_absolute;
     supported_instructions[0xfe] = inc_absolute_plus_x;
     supported_instructions[0xc8] = inc_reg(&emulator::Registers::y);
     supported_instructions[0xe8] = inc_reg(&emulator::Registers::x);
+
     supported_instructions[0xc6] = dec_zeropage;
     supported_instructions[0x88] = dec_reg(&emulator::Registers::y);
     supported_instructions[0xca] = dec_reg(&emulator::Registers::x);
+
+    // Logical operators
+    supported_instructions[0x05] = or_acc_zeropage;
+    supported_instructions[0x09] = or_acc_immediate;
+    supported_instructions[0x15] = or_acc_immediate;
+    supported_instructions[0x0d] = or_acc_absolute;
+    supported_instructions[0x1d] = or_acc_absolute_x;
+    supported_instructions[0x19] = or_acc_absolute_y;
+    supported_instructions[0x01] = or_acc_index_indirect;
+    supported_instructions[0x11] = or_acc_indirect_index;
 
     return supported_instructions;
 }
@@ -660,9 +841,9 @@ std::optional<InstructionConfig> execute_next(emulator::Cpu& cpu, std::span<cons
 
     // Find the correct function to execute here
     auto const command = program[cpu.reg.pc];
-    
 
-    auto const instruction   = instructions[command];
+
+    auto const instruction = instructions[command];
     try
     {
         return instruction(cpu, program);
@@ -674,6 +855,7 @@ std::optional<InstructionConfig> execute_next(emulator::Cpu& cpu, std::span<cons
     }
 }
 
+
 export namespace emulator
 {
 
@@ -681,7 +863,7 @@ export namespace emulator
     {
         std::size_t n_cycles    = 0;
         ENABLE_PROFILER(cpu);
-        auto const instructions = get_instructions(cpu);
+        auto const instructions = get_instructions();
         while (cpu.reg.pc < program.size())
         {
             auto const time_now  = std::chrono::high_resolution_clock::now();

@@ -1,4 +1,5 @@
 include(CTest)
+include(GoogleTest)
 
 find_package(GTest REQUIRED COMPONENTS gtest_main)
 
@@ -15,16 +16,19 @@ function(create_tests cpp_file_name)
     gtest::gtest)
 
   add_test(NAME ${cpp_file_name} COMMAND ${cpp_file_name})
+  gtest_discover_tests(${cpp_file_name})
+  
 endfunction()
 
 
+create_tests(branch_tests)
 create_tests(emulator_tests)
-create_tests(ld_immediate_tests)
-create_tests(ld_zeropage_tests)
-create_tests(ld_absolute_tests)
+create_tests(increment_tests)
 create_tests(ld_absolute_indexed_tests)
+create_tests(ld_absolute_tests)
+create_tests(ld_immediate_tests)
 create_tests(ld_index_indirect_tests)
 create_tests(ld_indirect_indexed_tests)
-create_tests(branch_tests)
+create_tests(ld_zeropage_tests)
+create_tests(or_immediate_tests)
 create_tests(tx_tests)
-create_tests(increment_tests)
