@@ -114,6 +114,25 @@ export namespace emulator
 
         // Clock speed for this particular CPU
         double clock_speed = CLOCK_SPEED_MHZ;
+
+#ifdef BUILD_PROFILER
+        // If profiling is enabled, create space for a bookeper
+        std::shared_ptr<ProfileBook> profiler_book{std::make_shared<ProfileBook>()};
+
+        std::unordered_map<std::string, double> current_profile()
+        {
+            if (!profiler_book)
+            {
+                return {};
+            }
+            return profiler_book->functions;
+        }
+#else
+        std::unordered_map<std::string, double> current_profile()
+        {
+            return {};
+        }
+#endif // BUILD_PROFILER
     };
 } // namespace emulator
 

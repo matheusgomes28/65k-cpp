@@ -17,9 +17,7 @@ function(create_tests cpp_file_name)
 
   add_test(NAME ${cpp_file_name} COMMAND ${cpp_file_name})
   gtest_discover_tests(${cpp_file_name})
-  
 endfunction()
-
 
 create_tests(branch_tests)
 create_tests(emulator_tests)
@@ -30,5 +28,6 @@ create_tests(ld_immediate_tests)
 create_tests(ld_index_indirect_tests)
 create_tests(ld_indirect_indexed_tests)
 create_tests(ld_zeropage_tests)
-create_tests(or_immediate_tests)
+create_tests(ora_immediate_tests)
+create_tests(ora_zeropage_tests)
 create_tests(tx_tests)

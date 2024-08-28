@@ -23,7 +23,7 @@ import emulator;
 
 
 // NOLINTNEXTLINE
-TEST(ORATests, NoFlagOperations)
+TEST(ORAImmediateTests, NoFlagOperations)
 {
     // test_case = {init acc, immediate value}
     std::array<std::pair<std::uint8_t, std::uint8_t>, 3> const test_cases{{
@@ -56,7 +56,7 @@ TEST(ORATests, NoFlagOperations)
 }
 
 // NOLINTNEXTLINE
-TEST(ORATests, NegativeFlagOperation)
+TEST(ORAImmediateTests, NegativeFlagOperation)
 {
     // test_case = {init acc, immediate value}
     std::array<std::pair<std::uint8_t, std::uint8_t>, 6> const test_cases{{
@@ -92,7 +92,7 @@ TEST(ORATests, NegativeFlagOperation)
 }
 
 // NOLINTNEXTLINE
-TEST(ORATests, ZeroFlagOperation)
+TEST(ORAImmediateTests, ZeroFlagOperation)
 {
     emulator::Cpu cpu;
     cpu.reg.a = 0x00;
@@ -115,7 +115,7 @@ TEST(ORATests, ZeroFlagOperation)
 }
 
 // NOLINTNEXTLINE
-TEST(ORATests, MakeSureFlagsAreSound)
+TEST(ORAImmediateTests, MakeSureFlagsAreSound)
 {
     // Weird testcase, we should never have both Z and N
     // flags set
@@ -158,8 +158,6 @@ TEST(ORATests, MakeSureFlagsAreSound)
         }
     }
 }
-
-
 
 int main(int argc, char** argv)
 {
