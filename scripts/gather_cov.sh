@@ -10,7 +10,7 @@ THIS_DIR=$(cd "$(dirname "$0")" && pwd)
 PROJECT_DIR="$(cd "${THIS_DIR}/.." && pwd)"
 
 echo "Project root dir: ${PROJECT_DIR}"
-lcov --capture --directory . --output-file coverage.info \
+lcov --capture --directory . --output-file lcov.info \
      --rc geninfo_adjust_src_path="${PROJECT_DIR}/build/unix-deb-ninja \
      => ${PROJECT_DIR}" \
      --gcov-tool "${PROJECT_DIR}/scripts/gcov_for_clang.sh" \
@@ -22,16 +22,12 @@ SYSTEM_DIR="/usr/"
 CONAN_DIR="${HOME}/.conan2/"
 
 # Remove the system & test dirs
-echo "!!!!!!1"
-lcov --ignore-errors inconsistent --remove coverage.info "${SYSTEM_DIR}*" --output-file coverage.info
-echo "!!!!!!2"
-lcov --ignore-errors inconsistent --remove coverage.info "${CONAN_DIR}*" --output-file coverage.info
-echo "!!!!!!3"
-lcov --ignore-errors inconsistent --remove coverage.info "${PROJECT_DIR}/tests*" --output-file coverage.info
-echo "!!!!!!4"
+lcov --ignore-errors inconsistent --remove lcov.info "${SYSTEM_DIR}*" --output-file lcov.info
+lcov --ignore-errors inconsistent --remove lcov.info "${CONAN_DIR}*" --output-file lcov.info
+lcov --ignore-errors inconsistent --remove lcov.info "${PROJECT_DIR}/tests*" --output-file lcov.info
 
 # Generate HTML report into coverage/
-genhtml coverage.info --ignore-errors inconsistent --ignore-errors corrupt --output-directory coverage > coverage_stats.txt
+genhtml lcov.info --ignore-errors inconsistent --ignore-errors corrupt --output-directory coverage > coverage_stats.txt
 LINES_COV="$(grep lines < coverage_stats.txt | grep -Eo "[0-9]+\.[0-9]+%" | cut -d '.' -f1)"
 FUNCTIONS_COV="$(grep functions < coverage_stats.txt | grep -Eo "[0-9]+\.[0-9]+%" | cut -d '.' -f1)"
 
