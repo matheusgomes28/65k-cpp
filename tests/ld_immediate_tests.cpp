@@ -29,7 +29,7 @@ TEST(LDTests, LdAImmediateWithNonZero)
         0x0a,
     };
     emulator::Cpu cpu;
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x0a);
@@ -54,7 +54,7 @@ TEST(LDTests, LdAImmediateWithZero)
         0x00,
     };
     emulator::Cpu cpu;
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -78,7 +78,7 @@ TEST(LDTests, LdAImmediateWithNegative)
         0xFF,
     };
     emulator::Cpu cpu;
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     ASSERT_EQ(cpu.reg.a, 0xFF);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -98,7 +98,7 @@ TEST(LDTests, LdXImmediateWithNonZero)
         0x0a,
     };
     emulator::Cpu cpu;
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
@@ -119,7 +119,7 @@ TEST(LDTests, LdXImmediateWithZero)
         0x00,
     };
     emulator::Cpu cpu;
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -139,7 +139,7 @@ TEST(LDTests, LdXImmediateWithNegative)
         0xFF,
     };
     emulator::Cpu cpu;
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0xFF);
@@ -160,7 +160,7 @@ TEST(LDTests, LdYImmediateWithNonZero)
         0x0a,
     };
     emulator::Cpu cpu;
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
@@ -181,7 +181,7 @@ TEST(LDTests, LdYImmediateWithZero)
         0x00,
     };
     emulator::Cpu cpu;
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -201,7 +201,7 @@ TEST(LDTests, LdYImmediateWithNegative)
         0xFF,
     };
     emulator::Cpu cpu;
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);

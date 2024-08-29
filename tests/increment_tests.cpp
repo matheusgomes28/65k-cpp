@@ -34,7 +34,7 @@ TEST(IncrementTests, INXNoFlags)
     {
         emulator::Cpu cpu;
         cpu.reg.x = init_x;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, init_x + 1);
@@ -62,7 +62,7 @@ TEST(IncrementTests, INYNoFlags)
     {
         emulator::Cpu cpu;
         cpu.reg.y = init_y;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
@@ -91,7 +91,7 @@ TEST(IncrementTests, INCZeropageNoFlags)
         emulator::Cpu cpu;
         // TODO : Set the memory to init
         cpu.mem[init_v] = init_v;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
@@ -123,7 +123,7 @@ TEST(IncrementTests, INCZeropagePlusXNoFlags)
         cpu.reg.x              = 0x0a;
         std::uint8_t const pos = cpu.reg.x + program[1];
         cpu.mem[pos]           = init_v;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x0a);
@@ -157,7 +157,7 @@ TEST(IncrementTests, INCAbsoluteNoFlags)
         std::uint16_t pos = (hsb << 8) | lsb;
         cpu.mem[pos]      = init_v;
 
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
@@ -192,7 +192,7 @@ TEST(IncrementTests, INCAbsolutePluxXNoFlags)
         std::uint16_t pos = (hsb << 8) | lsb + cpu.reg.x;
         cpu.mem[pos]      = init_v;
 
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x0a);
@@ -212,7 +212,7 @@ TEST(IncrementTests, INXZeroFlag)
 
     emulator::Cpu cpu;
     cpu.reg.x = 0xff;
-    emulator::execute(cpu, {program.data(), program.size()});
+    ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -230,7 +230,7 @@ TEST(IncrementTests, INYZeroFlag)
 
     emulator::Cpu cpu;
     cpu.reg.y = 0xff;
-    emulator::execute(cpu, {program.data(), program.size()});
+    ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -248,7 +248,7 @@ TEST(IncrementTests, INCZeropageZeroFlag)
 
     emulator::Cpu cpu;
     cpu.mem[0x0a] = 0xff;
-    emulator::execute(cpu, {program.data(), program.size()});
+    ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -268,7 +268,7 @@ TEST(IncrementTests, INCZeropagePluxXZeroFlag)
     emulator::Cpu cpu;
     cpu.reg.x     = 0x0a;
     cpu.mem[0x14] = 0xff;
-    emulator::execute(cpu, {program.data(), program.size()});
+    ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x0a);
@@ -292,7 +292,7 @@ TEST(IncrementTests, INCAbsoluteZeroFlag)
     std::uint16_t const pos = ((hsb << 8) | lsb);
 
     cpu.mem[pos] = 0xff;
-    emulator::execute(cpu, {program.data(), program.size()});
+    ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -317,7 +317,7 @@ TEST(IncrementTests, INCAbsolutePluxXZeroFlag)
     std::uint16_t const pos = ((hsb << 8) | lsb) + cpu.reg.x;
 
     cpu.mem[pos] = 0xff;
-    emulator::execute(cpu, {program.data(), program.size()});
+    ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x0a);
@@ -350,7 +350,7 @@ TEST(IncrementTests, INXNegativeFlag)
     {
         emulator::Cpu cpu;
         cpu.reg.x = init_x;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, init_x + 1);
@@ -382,7 +382,7 @@ TEST(IncrementTests, INYNegativeFlag)
     {
         emulator::Cpu cpu;
         cpu.reg.y = init_y;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
@@ -416,7 +416,7 @@ TEST(IncrementTests, INCZeropageNegativeFlag)
     {
         emulator::Cpu cpu;
         cpu.mem[init_v] = init_v;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
@@ -455,7 +455,7 @@ TEST(IncrementTests, INCZeropagePlusXNegativeFlag)
         cpu.mem[pos]           = init_v;
         cpu.reg.x              = init_v;
 
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, init_v);
@@ -495,7 +495,7 @@ TEST(IncrementTests, INCAbsoluteNegativeFlag)
         std::uint16_t const pos = (hsb << 8) | lsb;
         cpu.mem[pos]            = init_v;
 
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
@@ -536,7 +536,7 @@ TEST(IncrementTests, INCAbsolutePluxXNegativeFlag)
         std::uint16_t const pos = (hsb << 8) | lsb + cpu.reg.x;
         cpu.mem[pos]            = init_v;
 
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x0a);

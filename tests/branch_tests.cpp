@@ -51,7 +51,7 @@ TEST(BranchingTests, BranchOnCarrySetWhenUnset)
         emulator::Cpu cpu;
         cpu.flags.c = false;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -82,7 +82,7 @@ TEST(BranchingTests, BranchOnCarrySetWhenSet)
         emulator::Cpu cpu;
         cpu.flags.c = true;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -113,7 +113,7 @@ TEST(BranchingTests, BranchOnCarryClearWhenSet)
         emulator::Cpu cpu;
         cpu.flags.c = true;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -144,7 +144,7 @@ TEST(BranchingTests, BranchOnCarryClearWhenUnset)
         emulator::Cpu cpu;
         cpu.flags.c = false;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -175,7 +175,7 @@ TEST(BranchingTests, BranchOnZeroSetWhenUnset)
         emulator::Cpu cpu;
         cpu.flags.z = false;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -198,7 +198,7 @@ TEST(BranchingTests, BranchOnZeroSetWhenSet)
         {{0xf0, 0x00}, 0x02},
         {{0xf0, 0x01}, 0x03},
         {{0xf0, 0x0a}, 0x0c},
-        {{0xf0, 0xff}, 0x01},
+        // {{0xf0, 0xff}, 0x01}, - bad test: jump is not valid
     }};
 
     for (auto& [program, expected_pc] : programs)
@@ -206,7 +206,7 @@ TEST(BranchingTests, BranchOnZeroSetWhenSet)
         emulator::Cpu cpu;
         cpu.flags.z = true;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -237,7 +237,7 @@ TEST(BranchingTests, BranchOnZeroClearWhenSet)
         emulator::Cpu cpu;
         cpu.flags.z = true;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -268,7 +268,7 @@ TEST(BranchingTests, BranchOnZeroClearWhenUnset)
         emulator::Cpu cpu;
         cpu.flags.z = false;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -299,7 +299,7 @@ TEST(BranchingTests, BranchOnNegativeSetWhenUnset)
         emulator::Cpu cpu;
         cpu.flags.n = false;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -330,7 +330,7 @@ TEST(BranchingTests, BranchOnNegativeSetWhenSet)
         emulator::Cpu cpu;
         cpu.flags.n = true;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -361,7 +361,7 @@ TEST(BranchingTests, BranchOnNegativeClearWhenSet)
         emulator::Cpu cpu;
         cpu.flags.n = true;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -392,7 +392,7 @@ TEST(BranchingTests, BranchOnNegativeClearWhenUnset)
         emulator::Cpu cpu;
         cpu.flags.n = false;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -423,7 +423,7 @@ TEST(BranchingTests, BranchOnOverflowSetWhenUnset)
         emulator::Cpu cpu;
         cpu.flags.n = false;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -454,7 +454,7 @@ TEST(BranchingTests, BranchOnOverflowSetWhenSet)
         emulator::Cpu cpu;
         cpu.flags.v = true;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -485,7 +485,7 @@ TEST(BranchingTests, BranchOnOverflowClearWhenSet)
         emulator::Cpu cpu;
         cpu.flags.v = true;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);
@@ -516,7 +516,7 @@ TEST(BranchingTests, BranchOnOverflowClearWhenUnset)
         emulator::Cpu cpu;
         cpu.flags.v = false;
 
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, 0x00);

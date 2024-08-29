@@ -41,7 +41,7 @@ TEST(ORAImmediateTests, NoFlagOperations)
             0x09,
             im_value,
         };
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, init_acc | im_value);
@@ -77,7 +77,7 @@ TEST(ORAImmediateTests, NegativeFlagOperation)
             0x09,
             im_value,
         };
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, init_acc | im_value);
@@ -101,7 +101,7 @@ TEST(ORAImmediateTests, ZeroFlagOperation)
         0x09,
         0x00,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
@@ -131,7 +131,7 @@ TEST(ORAImmediateTests, MakeSureFlagsAreSound)
                 0x09,
                 static_cast<std::uint8_t>(val),
             };
-            emulator::execute(cpu, program);
+            ASSERT_TRUE(emulator::execute(cpu, program));
 
             // Registry expect
             ASSERT_EQ(cpu.reg.a, val | acc);

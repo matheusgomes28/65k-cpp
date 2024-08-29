@@ -36,7 +36,7 @@ TEST(LDTests, LDAAbsoluteNonZero)
         0x00,
         0x02,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x5a);
@@ -61,7 +61,7 @@ TEST(LDTests, LDXAbsoluteNonZero)
         0x00,
         0x02,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
@@ -86,7 +86,7 @@ TEST(LDTests, LDYAbsoluteNonZero)
         0x00,
         0x02,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
@@ -111,7 +111,7 @@ TEST(LDTests, LDAAbsoluteWithZero)
         0x00,
         0x02,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
@@ -136,7 +136,7 @@ TEST(LDTests, LDXAbsoluteWithZero)
         0x00,
         0x02,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
@@ -161,7 +161,7 @@ TEST(LDTests, LDYAbsoluteWithZero)
         0x00,
         0x02,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
@@ -186,7 +186,7 @@ TEST(LDTests, LDAAbsoluteWithNegative)
         0x00,
         0x02,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0xFF);
@@ -211,7 +211,7 @@ TEST(LDTests, LDXAbsoluteWithNegative)
         0x00,
         0x02,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
@@ -236,7 +236,7 @@ TEST(LDTests, LDYAbsoluteWithNegative)
         0x00,
         0x02,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
