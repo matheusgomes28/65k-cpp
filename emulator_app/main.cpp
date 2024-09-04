@@ -6,10 +6,10 @@ import emulator;
 #include <fstream>
 #include <future>
 #include <iostream>
-#include <raylib.h>
 #include <thread>
 #include <vector>
 
+#include <raylib.h>
 
 namespace
 {
@@ -82,6 +82,11 @@ int main(int argc, char** argv)
     std::vector<char> program_contents{(std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>()};
 
     emulator::execute(easy65k, {reinterpret_cast<std::uint8_t*>(program_contents.data()), program_contents.size()});
+
+    for (auto const& [function, profile] : easy65k.current_profile())
+    {
+        std::cout << std::format("{}: {:.6f}\n", function, profile);
+    }
 
     draw(easy65k);
 }

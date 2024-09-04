@@ -100,7 +100,8 @@
             "binaryDir": "${sourceDir}/build/unix-rel-ninja",
             "inherits": ["unix-ninja", "rel", "conan-rel"],
             "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/unix-rel-ninja/install"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/unix-rel-ninja/install",
+                "BUILD_PROFILER": true
             }
         },
         {
@@ -130,7 +131,8 @@
             "cacheVariables": {
                 "CMAKE_CXX_FLAGS": "-O0 --coverage -g -fsanitize=address",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/unix-deb-ninja/install",
-                "CLOCK_SPEED_MHZ": "3.58"
+                "CLOCK_SPEED_MHZ": "3.58",
+                "BUILD_PROFILER": true
             }
         },
         {
