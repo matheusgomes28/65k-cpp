@@ -661,52 +661,28 @@ std::optional<std::size_t> or_acc_absolute(emulator::Cpu& cpu, std::span<const s
     return std::make_optional<std::size_t>(3);
 }
 
-// TODO : merge this with the abs y function, same code
-std::optional<std::size_t> or_acc_absolute_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+Instruction or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
 {
-    ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
-        return std::nullopt;
-    }
+        ENABLE_PROFILER(cpu);
+        if ((cpu.reg.pc + 2) >= program.size())
+        {
+            return std::nullopt;
+        }
 
-    // (hsb << 8) + lsb convert little endian to the address
-    auto const lsb  = program[cpu.reg.pc + 1];
-    auto const hsb  = program[cpu.reg.pc + 2];
-    auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
-    auto const addr = static_cast<std::uint16_t>(abs_addr + cpu.reg.x);
-    // TOOD : add 1 to cycle if this addr crosses page boundary
+        auto const lsb      = program[cpu.reg.pc + 1];
+        auto const hsb      = program[cpu.reg.pc + 2];
+        auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
+        auto const addr     = static_cast<std::uint16_t>(abs_addr + (cpu.reg).*reg);
 
-    auto const value = cpu.mem[addr];
-    cpu.reg.a        = cpu.reg.a | value;
-    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
-    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
+        auto const value = cpu.mem[addr];
+        cpu.reg.a        = cpu.reg.a | value;
+        cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
+        cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
 
-    return std::make_optional<std::size_t>(3);
-}
-
-// TODO : merge this with the abs x function, same code
-std::optional<std::size_t> or_acc_absolute_y(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
-{
-    ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
-    {
-        return std::nullopt;
-    }
-
-    // (hsb << 8) + lsb convert little endian to the address
-    auto const lsb  = program[cpu.reg.pc + 1];
-    auto const hsb  = program[cpu.reg.pc + 2];
-    auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
-    auto const addr = static_cast<std::uint16_t>(abs_addr + cpu.reg.y);
-    // TOOD : add 1 to cycle if this addr crosses page boundary
-
-    auto const value = cpu.mem[addr];
-    cpu.reg.a        = cpu.reg.a | value;
-    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
-    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
-
-    return std::make_optional<std::size_t>(3);
+        return std::make_optional<std::size_t>(3);
+    };
 }
 
 std::optional<std::size_t> or_acc_index_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
@@ -720,8 +696,8 @@ std::optional<std::size_t> or_acc_index_indirect(emulator::Cpu& cpu, std::span<c
     // (hsb << 8) + lsb convert little endian to the address
     auto const zp_addr = static_cast<std::uint8_t>(program[cpu.reg.pc + 1] + cpu.reg.x);
 
-    auto const lsb  = cpu.mem[static_cast<std::uint8_t>(zp_addr + 1)];
-    auto const hsb  = cpu.mem[static_cast<std::uint8_t>(zp_addr + 2)];
+    auto const lsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr + 1)];
+    auto const hsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr + 2)];
     auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
 
     auto const value = cpu.mem[abs_addr];
@@ -740,10 +716,10 @@ std::optional<std::size_t> or_acc_indirect_index(emulator::Cpu& cpu, std::span<c
         return std::nullopt;
     }
 
-    auto const zp_addr = program[cpu.reg.pc + 1];
-    auto const lsb  = cpu.mem[static_cast<std::uint8_t>(zp_addr + 1)];
-    auto const hsb  = cpu.mem[static_cast<std::uint8_t>(zp_addr + 2)];
-    auto const abs_addr = static_cast<std::uint16_t>(((hsb << 8) | lsb) +  cpu.reg.y);
+    auto const zp_addr  = program[cpu.reg.pc + 1];
+    auto const lsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr + 1)];
+    auto const hsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr + 2)];
+    auto const abs_addr = static_cast<std::uint16_t>(((hsb << 8) | lsb) + cpu.reg.y);
 
     auto const value = cpu.mem[abs_addr];
     cpu.reg.a        = cpu.reg.a | value;
@@ -838,18 +814,18 @@ std::array<Instruction, 256> get_instructions()
     // Logical operators
     supported_instructions[0x05] = or_acc_zeropage;
     supported_instructions[0x09] = or_acc_immediate;
-    supported_instructions[0x15] = or_acc_immediate;
+    supported_instructions[0x15] = or_acc_zeropage_x;
     supported_instructions[0x0d] = or_acc_absolute;
-    supported_instructions[0x1d] = or_acc_absolute_x;
-    supported_instructions[0x19] = or_acc_absolute_y;
+    supported_instructions[0x1d] = or_acc_absolute_plus_reg(&emulator::Registers::x);
+    supported_instructions[0x19] = or_acc_absolute_plus_reg(&emulator::Registers::y);
     supported_instructions[0x01] = or_acc_index_indirect;
     supported_instructions[0x11] = or_acc_indirect_index;
 
     return supported_instructions;
 }
 
-std::optional<InstructionConfig> execute_next(emulator::Cpu& cpu, std::span<const std::uint8_t> program,
-    std::array<Instruction, 256> instructions)
+std::optional<InstructionConfig> execute_next(
+    emulator::Cpu& cpu, std::span<const std::uint8_t> program, std::array<Instruction, 256> instructions)
 {
     ENABLE_PROFILER(cpu);
     // Read 1 byte for the operator
@@ -880,7 +856,7 @@ export namespace emulator
 
     std::size_t execute(Cpu& cpu, std::span<const std::uint8_t> program)
     {
-        std::size_t n_cycles    = 0;
+        std::size_t n_cycles = 0;
         ENABLE_PROFILER(cpu);
         auto const instructions = get_instructions();
         while (cpu.reg.pc < program.size())
