@@ -694,10 +694,11 @@ std::optional<std::size_t> or_acc_index_indirect(emulator::Cpu& cpu, std::span<c
     }
 
     // (hsb << 8) + lsb convert little endian to the address
-    auto const zp_addr = static_cast<std::uint8_t>(program[cpu.reg.pc + 1] + cpu.reg.x);
+    auto const indexed_address = program[cpu.reg.pc + 1] + cpu.reg.x;
+    auto const zp_addr = static_cast<std::uint8_t>(indexed_address & 0xff);
 
-    auto const lsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr + 1)];
-    auto const hsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr + 2)];
+    auto const lsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr & 0xff)];
+    auto const hsb      = cpu.mem[static_cast<std::uint8_t>((zp_addr + 1) & 0xff)];
     auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
 
     auto const value = cpu.mem[abs_addr];
@@ -717,8 +718,8 @@ std::optional<std::size_t> or_acc_indirect_index(emulator::Cpu& cpu, std::span<c
     }
 
     auto const zp_addr  = program[cpu.reg.pc + 1];
-    auto const lsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr + 1)];
-    auto const hsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr + 2)];
+    auto const lsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr)];
+    auto const hsb      = cpu.mem[static_cast<std::uint8_t>((zp_addr + 1) & 0xff)];
     auto const abs_addr = static_cast<std::uint16_t>(((hsb << 8) | lsb) + cpu.reg.y);
 
     auto const value = cpu.mem[abs_addr];
