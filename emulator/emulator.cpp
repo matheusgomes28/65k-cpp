@@ -436,7 +436,7 @@ Instruction transfer_regs(std::uint8_t emulator::Registers::*from, std::uint8_t 
 
 // This function sends the value stored in X to SP and
 // does not set any flags.
-std::optional<InstructionConfig> txa(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+std::optional<InstructionConfig> txa(emulator::Cpu& cpu, std::span<const std::uint8_t> /* program */)
 {
     ENABLE_PROFILER(cpu);
     cpu.reg.sp = cpu.reg.x;

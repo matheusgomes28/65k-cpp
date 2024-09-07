@@ -26,8 +26,6 @@ TEST(ORAIndexedIndirectTests, ZeroAddressToLastAddress)
     // the zero page + x will render to the zero address,
     // which will store the two last accessible bytes
 
-    std::uint16_t const target_address = 0xffff;
-
     emulator::Cpu cpu;
     cpu.reg.a = 0b0101'0101;
     cpu.reg.x = 0x00;
@@ -57,8 +55,6 @@ TEST(ORAIndexedIndirectTests, ZeropageWrapsAround)
     // usable byte in the zeropage address. Meaning
     // that we wrap to the 0 byte as the high byte
     // on the indirect address
-
-    std::uint16_t const target_address = 0xffff;
 
     emulator::Cpu cpu;
     cpu.reg.a = 0b0101'0101;

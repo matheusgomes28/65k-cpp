@@ -26,8 +26,6 @@ TEST(ORAIndirectIndexedTests, ZeroAddressToLastAddress)
     // resulting in the target address 0xffff holding the
     // complement of the or operation
 
-    std::uint16_t const target_address = 0xffff;
-
     emulator::Cpu cpu;
     cpu.reg.a = 0b0101'0101;
     cpu.reg.y = 0x01;
@@ -59,8 +57,6 @@ TEST(ORAIndirectIndexedTests, ZeropageWrapsAround)
     // which is added to reg.y=0x01, resulting
     // in target 0xffff holding the complement of
     // the or operation
-
-    std::uint16_t const target_address = 0xffff;
 
     emulator::Cpu cpu;
     cpu.reg.a = 0b0101'0101;
