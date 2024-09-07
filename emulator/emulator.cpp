@@ -57,7 +57,6 @@ struct ProfileBook
 #define ENABLE_PROFILER(cpu)
 #endif // BUILD_PROFILER
 
-
 export namespace emulator
 {
     class OpcodeNotSupported : public std::exception
@@ -589,6 +588,16 @@ Instruction branch_flag_value(bool emulator::Flags::*flag)
     };
 }
 
+/// common code for the or related opcodes
+template <std::size_t T>
+std::optional<std::size_t> ora_operation(emulator::Cpu& cpu, std::uint8_t value)
+{
+    cpu.reg.a        = cpu.reg.a | value;
+    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
+    return std::make_optional<std::size_t>(T);
+}
+
 // Logical operations
 std::optional<std::size_t> or_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
@@ -598,11 +607,7 @@ std::optional<std::size_t> or_acc_immediate(emulator::Cpu& cpu, std::span<const 
         return std::nullopt;
     }
 
-    auto const value = program[cpu.reg.pc + 1];
-    cpu.reg.a        = cpu.reg.a | value;
-    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
-    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
-    return std::make_optional<std::size_t>(2);
+    return ora_operation<2>(cpu, program[cpu.reg.pc + 1]);
 }
 
 std::optional<std::size_t> or_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
@@ -614,12 +619,7 @@ std::optional<std::size_t> or_acc_zeropage(emulator::Cpu& cpu, std::span<const s
     }
 
     auto const offset = program[cpu.reg.pc + 1];
-    auto const value  = cpu.mem[offset];
-
-    cpu.reg.a   = cpu.reg.a | value;
-    cpu.flags.n = 0b1000'0000 & cpu.reg.a;
-    cpu.flags.z = !static_cast<bool>(cpu.reg.a);
-    return std::make_optional<std::size_t>(2);
+    return ora_operation<2>(cpu, cpu.mem[offset]);
 }
 
 std::optional<std::size_t> or_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
@@ -632,12 +632,7 @@ std::optional<std::size_t> or_acc_zeropage_x(emulator::Cpu& cpu, std::span<const
 
     auto const zp_offset = program[cpu.reg.pc + 1];
     auto const offset    = static_cast<std::uint8_t>(zp_offset + cpu.reg.x);
-    auto const value     = cpu.mem[offset];
-
-    cpu.reg.a   = cpu.reg.a | value;
-    cpu.flags.n = 0b1000'0000 & cpu.reg.a;
-    cpu.flags.z = !static_cast<bool>(cpu.reg.a);
-    return std::make_optional<std::size_t>(2);
+    return ora_operation<2>(cpu, cpu.mem[offset]);
 }
 
 std::optional<std::size_t> or_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
@@ -653,12 +648,7 @@ std::optional<std::size_t> or_acc_absolute(emulator::Cpu& cpu, std::span<const s
     auto const hsb  = program[cpu.reg.pc + 2];
     auto const addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
 
-    auto const value = cpu.mem[addr];
-    cpu.reg.a        = cpu.reg.a | value;
-    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
-    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
-
-    return std::make_optional<std::size_t>(3);
+    return ora_operation<3>(cpu, cpu.mem[addr]);
 }
 
 Instruction or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
@@ -676,12 +666,7 @@ Instruction or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
         auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
         auto const addr     = static_cast<std::uint16_t>(abs_addr + (cpu.reg).*reg);
 
-        auto const value = cpu.mem[addr];
-        cpu.reg.a        = cpu.reg.a | value;
-        cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
-        cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
-
-        return std::make_optional<std::size_t>(3);
+        return ora_operation<3>(cpu, cpu.mem[addr]);
     };
 }
 
@@ -701,12 +686,7 @@ std::optional<std::size_t> or_acc_index_indirect(emulator::Cpu& cpu, std::span<c
     auto const hsb      = cpu.mem[static_cast<std::uint8_t>((zp_addr + 1) & 0xff)];
     auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
 
-    auto const value = cpu.mem[abs_addr];
-    cpu.reg.a        = cpu.reg.a | value;
-    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
-    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
-
-    return std::make_optional<std::size_t>(2);
+    return ora_operation<2>(cpu, cpu.mem[abs_addr]);
 }
 
 std::optional<std::size_t> or_acc_indirect_index(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
@@ -722,12 +702,7 @@ std::optional<std::size_t> or_acc_indirect_index(emulator::Cpu& cpu, std::span<c
     auto const hsb      = cpu.mem[static_cast<std::uint8_t>((zp_addr + 1) & 0xff)];
     auto const abs_addr = static_cast<std::uint16_t>(((hsb << 8) | lsb) + cpu.reg.y);
 
-    auto const value = cpu.mem[abs_addr];
-    cpu.reg.a        = cpu.reg.a | value;
-    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
-    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
-
-    return std::make_optional<std::size_t>(2);
+    return ora_operation<2>(cpu, cpu.mem[abs_addr]);
 }
 
 // TODO : provide support for counting the number of cycles passed
