@@ -148,6 +148,24 @@ export struct InstructionConfig
 
 using Instruction = std::function<std::optional<InstructionConfig>(emulator::Cpu&, std::span<const std::uint8_t>)>;
 
+
+/*
+    Addressing helpers - zeropage + reg, indexed indirect, indirect indexed helpers
+*/
+
+
+/// @brief this function aids getting the indexed zeropage address
+/// from the given argument to the opcode
+/// @param cpu is the cpu opject to operate on
+/// @param value is the zeropage address to add the index to
+/// @param index is the register to use as the index add value
+inline std::uint16_t zeropage_indexed(emulator::Cpu& cpu, std::uint8_t value, std::uint8_t emulator::Registers::*index)
+{
+    auto const masked = ((cpu.reg).*index + value) & 0xff;
+    return static_cast<std::uint16_t>(masked);
+}
+
+
 Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
@@ -189,7 +207,14 @@ Instruction ld_zeropage(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-Instruction ld_zeropage_plus_reg(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+/// @brief this function will load the value in the given memory
+/// to the address acquired from the register given plus the index
+/// given.
+/// @param to the destination register where the value will be loaded into.
+/// @param add the register to use as the index add.
+/// @return Instruction containing the number of bytes consumed from the
+/// program and the cycles taken.
+Instruction ld_zeropage_indexed(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -201,7 +226,7 @@ Instruction ld_zeropage_plus_reg(std::uint8_t emulator::Registers::*to, std::uin
         }
 
         // TODO : Write some tests for the wrapping behaviour
-        std::uint8_t const pos   = program[cpu.reg.pc + 1] + (cpu.reg).*add;
+        std::uint16_t const pos  = zeropage_indexed(cpu, program[cpu.reg.pc + 1], add);
         std::uint8_t const value = cpu.mem[pos];
         (cpu.reg).*to            = value;
         cpu.flags.z              = value == 0;
@@ -335,7 +360,8 @@ std::optional<InstructionConfig> inc_zeropage_plus_x(emulator::Cpu& cpu, std::sp
         return std::nullopt;
     }
 
-    std::uint8_t const pos = program[cpu.reg.pc + 1] + cpu.reg.x;
+    std::uint16_t const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
+
     cpu.mem[pos]++;
     cpu.flags.z = cpu.mem[pos] == 0;
     cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
@@ -485,6 +511,29 @@ Instruction st_zeropage(std::uint8_t emulator::Registers::*from)
     };
 }
 
+/// @brief this function will store the value of the given register
+/// to the zeropage + index memory location given by the program
+/// arguments.
+/// @param from is the register containing the value to be stored in memory.
+/// @param index is the register used as the index (i.e. X or Y mostly).
+Instruction st_zeropage_indexed(std::uint8_t emulator::Registers::*from, std::uint8_t emulator::Registers::*index)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
+    {
+        ENABLE_PROFILER(cpu);
+        // LOAD Value into accumulator
+        if ((cpu.reg.pc + 1) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+        auto const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], index);
+        cpu.mem[pos]   = (cpu.reg).*from;
+
+        return std::make_optional<InstructionConfig>(2, 3);
+    };
+}
+
 Instruction st_absolute(std::uint8_t emulator::Registers::*from)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
@@ -592,9 +641,9 @@ Instruction branch_flag_value(bool emulator::Flags::*flag)
 template <std::size_t T>
 std::optional<std::size_t> ora_operation(emulator::Cpu& cpu, std::uint8_t value)
 {
-    cpu.reg.a        = cpu.reg.a | value;
-    cpu.flags.n      = 0b1000'0000 & cpu.reg.a;
-    cpu.flags.z      = !static_cast<bool>(cpu.reg.a);
+    cpu.reg.a   = cpu.reg.a | value;
+    cpu.flags.n = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z = !static_cast<bool>(cpu.reg.a);
     return std::make_optional<std::size_t>(T);
 }
 
@@ -630,9 +679,8 @@ std::optional<std::size_t> or_acc_zeropage_x(emulator::Cpu& cpu, std::span<const
         return std::nullopt;
     }
 
-    auto const zp_offset = program[cpu.reg.pc + 1];
-    auto const offset    = static_cast<std::uint8_t>(zp_offset + cpu.reg.x);
-    return ora_operation<2>(cpu, cpu.mem[offset]);
+    std::uint16_t const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
+    return ora_operation<2>(cpu, cpu.mem[pos]);
 }
 
 std::optional<std::size_t> or_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
@@ -680,7 +728,7 @@ std::optional<std::size_t> or_acc_index_indirect(emulator::Cpu& cpu, std::span<c
 
     // (hsb << 8) + lsb convert little endian to the address
     auto const indexed_address = program[cpu.reg.pc + 1] + cpu.reg.x;
-    auto const zp_addr = static_cast<std::uint8_t>(indexed_address & 0xff);
+    auto const zp_addr         = static_cast<std::uint8_t>(indexed_address & 0xff);
 
     auto const lsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr & 0xff)];
     auto const hsb      = cpu.mem[static_cast<std::uint8_t>((zp_addr + 1) & 0xff)];
@@ -730,17 +778,25 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0xba] = transfer_regs(&emulator::Registers::sp, &emulator::Registers::x);
     supported_instructions[0x9a] = txa;
 
+    // STA instructions
     supported_instructions[0x85] = st_zeropage(&emulator::Registers::a);
     supported_instructions[0x8d] = st_absolute(&emulator::Registers::a);
     supported_instructions[0x91] = st_indirect(&emulator::Registers::a, &emulator::Registers::y);
+    supported_instructions[0x95] = st_zeropage_indexed(&emulator::Registers::a, &emulator::Registers::x);
+
+    // STX Instructions
     supported_instructions[0x86] = st_zeropage(&emulator::Registers::x);
     supported_instructions[0x8e] = st_absolute(&emulator::Registers::x);
+    supported_instructions[0x96] = st_zeropage_indexed(&emulator::Registers::x, &emulator::Registers::y);
+
+    // STY Isntructions
     supported_instructions[0x84] = st_zeropage(&emulator::Registers::y);
     supported_instructions[0x8c] = st_absolute(&emulator::Registers::y);
+    supported_instructions[0x94] = st_zeropage_indexed(&emulator::Registers::y, &emulator::Registers::x);
 
     supported_instructions[0xa9] = ld_immediate(&emulator::Registers::a);
     supported_instructions[0xa5] = ld_zeropage(&emulator::Registers::a);
-    supported_instructions[0xb5] = ld_zeropage_plus_reg(&emulator::Registers::a, &emulator::Registers::x);
+    supported_instructions[0xb5] = ld_zeropage_indexed(&emulator::Registers::a, &emulator::Registers::x);
     supported_instructions[0xbd] = ld_absolute_plus_reg(&emulator::Registers::a, &emulator::Registers::x);
     supported_instructions[0xb9] = ld_absolute_plus_reg(&emulator::Registers::a, &emulator::Registers::y);
     supported_instructions[0xa1] = ld_index_indirect(&emulator::Registers::a, &emulator::Registers::x);
@@ -748,12 +804,12 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0xad] = ld_absolute(&emulator::Registers::a);
     supported_instructions[0xa2] = ld_immediate(&emulator::Registers::x);
     supported_instructions[0xa6] = ld_zeropage(&emulator::Registers::x);
-    supported_instructions[0xb6] = ld_zeropage_plus_reg(&emulator::Registers::x, &emulator::Registers::y);
+    supported_instructions[0xb6] = ld_zeropage_indexed(&emulator::Registers::x, &emulator::Registers::y);
     supported_instructions[0xae] = ld_absolute(&emulator::Registers::x);
     supported_instructions[0xbe] = ld_absolute_plus_reg(&emulator::Registers::x, &emulator::Registers::y);
     supported_instructions[0xa0] = ld_immediate(&emulator::Registers::y);
     supported_instructions[0xa4] = ld_zeropage(&emulator::Registers::y);
-    supported_instructions[0xb4] = ld_zeropage_plus_reg(&emulator::Registers::y, &emulator::Registers::x);
+    supported_instructions[0xb4] = ld_zeropage_indexed(&emulator::Registers::y, &emulator::Registers::x);
     supported_instructions[0xbc] = ld_absolute_plus_reg(&emulator::Registers::y, &emulator::Registers::x);
     supported_instructions[0xac] = ld_absolute(&emulator::Registers::y);
 
