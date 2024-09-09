@@ -156,13 +156,28 @@ using Instruction = std::function<std::optional<InstructionConfig>(emulator::Cpu
 
 /// @brief this function aids getting the indexed zeropage address
 /// from the given argument to the opcode
-/// @param cpu is the cpu opject to operate on
+/// @param cpu is the cpu object to operate on
 /// @param value is the zeropage address to add the index to
 /// @param index is the register to use as the index add value
 inline std::uint16_t zeropage_indexed(emulator::Cpu& cpu, std::uint8_t value, std::uint8_t emulator::Registers::*index)
 {
     auto const masked = ((cpu.reg).*index + value) & 0xff;
     return static_cast<std::uint16_t>(masked);
+}
+
+/// @brief this function aids in getting the absolute indexed
+/// address for absolute indexed addressing opcodes.
+/// @param cpu is the cpu object to operate on
+/// @param lsb is the low significant bits, or the first byte after the opcodes.
+/// @param hsb is the high significant bits, or the second byte after the opcodes.
+/// @param index is the pointer to the register to use as the index add.
+/// @return the resolved target address.
+inline std::uint16_t absolute_indexed(emulator::Cpu& cpu, std::uint8_t lsb, std::uint8_t hsb, std::uint8_t emulator::Registers::*index)
+{
+    // Do we want to put these numbers as std::uint16_t?
+    auto const address = (hsb << 8) | lsb;
+    auto const target_address = address + (cpu.reg).*index;
+    return static_cast<std::uint16_t>(target_address & 0xffff);
 }
 
 
@@ -270,10 +285,7 @@ Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::*to, std::uin
         }
 
         // Do we want to put these numbers as std::uint16_t?
-        std::uint16_t const lsb = program[cpu.reg.pc + 1];
-        std::uint16_t const hsb = program[cpu.reg.pc + 2];
-
-        std::uint16_t const pos  = ((hsb << 8) | lsb) + static_cast<std::uint16_t>((cpu.reg).*add);
+        std::uint16_t const pos = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], add);
         std::uint8_t const value = cpu.mem[pos];
 
         (cpu.reg).*to = value;
@@ -396,10 +408,7 @@ std::optional<InstructionConfig> inc_absolute_plus_x(emulator::Cpu& cpu, std::sp
         return std::nullopt;
     }
 
-    std::uint8_t const lsb      = program[cpu.reg.pc + 1];
-    std::uint8_t const hsb      = program[cpu.reg.pc + 2];
-    std::uint16_t const address = (static_cast<std::uint16_t>(hsb) << 8) | static_cast<std::uint16_t>(lsb);
-    std::uint16_t const pos     = address + static_cast<std::uint16_t>(cpu.reg.x);
+    std::uint16_t const pos = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], &emulator::Registers::x);
 
     cpu.mem[pos]++;
     cpu.flags.z = cpu.mem[pos] == 0;
@@ -709,10 +718,7 @@ Instruction or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
             return std::nullopt;
         }
 
-        auto const lsb      = program[cpu.reg.pc + 1];
-        auto const hsb      = program[cpu.reg.pc + 2];
-        auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
-        auto const addr     = static_cast<std::uint16_t>(abs_addr + (cpu.reg).*reg);
+        auto const addr = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], reg);
 
         return ora_operation<3>(cpu, cpu.mem[addr]);
     };
