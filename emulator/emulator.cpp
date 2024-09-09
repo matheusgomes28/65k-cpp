@@ -543,6 +543,25 @@ Instruction st_zeropage_indexed(std::uint8_t emulator::Registers::*from, std::ui
     };
 }
 
+Instruction sta_absolute_indexed(std::uint8_t emulator::Registers::*index)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
+    {
+        ENABLE_PROFILER(cpu);
+        // LOAD Value into accumulator
+        if ((cpu.reg.pc + 2) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+        auto const pos = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], index);
+        cpu.mem[pos]   = cpu.reg.a;
+
+        // TODO : Return correct number of cycles
+        return std::make_optional<InstructionConfig>(3, 0);
+    };
+}
+
 Instruction st_absolute(std::uint8_t emulator::Registers::*from)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
@@ -789,6 +808,8 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x8d] = st_absolute(&emulator::Registers::a);
     supported_instructions[0x91] = st_indirect(&emulator::Registers::a, &emulator::Registers::y);
     supported_instructions[0x95] = st_zeropage_indexed(&emulator::Registers::a, &emulator::Registers::x);
+    supported_instructions[0x99] = sta_absolute_indexed(&emulator::Registers::y);
+    supported_instructions[0x9d] = sta_absolute_indexed(&emulator::Registers::x);
 
     // STX Instructions
     supported_instructions[0x86] = st_zeropage(&emulator::Registers::x);
