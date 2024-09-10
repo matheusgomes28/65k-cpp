@@ -675,7 +675,83 @@ std::optional<std::size_t> ora_operation(emulator::Cpu& cpu, std::uint8_t value)
     return std::make_optional<std::size_t>(T);
 }
 
+template <std::size_t T>
+std::optional<std::size_t> and_operation(emulator::Cpu& cpu, std::uint8_t value)
+{
+    cpu.reg.a   = cpu.reg.a & value;
+    cpu.flags.n = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z = !static_cast<bool>(cpu.reg.a);
+    return std::make_optional<std::size_t>(T);
+}
+
 // Logical operations
+std::optional<std::size_t> and_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    return and_operation<2>(cpu, program[cpu.reg.pc + 1]);
+}
+
+std::optional<std::size_t> and_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const offset = program[cpu.reg.pc + 1];
+    return and_operation<2>(cpu, cpu.mem[offset]);
+}
+
+std::optional<std::size_t> and_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    std::uint16_t const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
+    return and_operation<2>(cpu, cpu.mem[pos]);
+}
+
+std::optional<std::size_t> and_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    // (hsb << 8) + lsb convert little endian to the address
+    auto const lsb  = program[cpu.reg.pc + 1];
+    auto const hsb  = program[cpu.reg.pc + 2];
+    auto const addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
+
+    return and_operation<3>(cpu, cpu.mem[addr]);
+}
+
+Instruction and_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
+    {
+        ENABLE_PROFILER(cpu);
+        if ((cpu.reg.pc + 2) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+        auto const addr = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], reg);
+
+        return and_operation<3>(cpu, cpu.mem[addr]);
+    };
+}
+
 std::optional<std::size_t> or_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
@@ -870,7 +946,7 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x88] = dec_reg(&emulator::Registers::y);
     supported_instructions[0xca] = dec_reg(&emulator::Registers::x);
 
-    // Logical operators
+    // ORA opcodes
     supported_instructions[0x05] = or_acc_zeropage;
     supported_instructions[0x09] = or_acc_immediate;
     supported_instructions[0x15] = or_acc_zeropage_x;
@@ -879,6 +955,16 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x19] = or_acc_absolute_plus_reg(&emulator::Registers::y);
     supported_instructions[0x01] = or_acc_index_indirect;
     supported_instructions[0x11] = or_acc_indirect_index;
+
+    // AND opcodes
+    supported_instructions[0x25] = and_acc_zeropage;
+    supported_instructions[0x29] = and_acc_immediate;
+    supported_instructions[0x35] = and_acc_zeropage_x;
+    supported_instructions[0x2d] = and_acc_absolute;
+    supported_instructions[0x39] = and_acc_absolute_plus_reg(&emulator::Registers::y);
+    supported_instructions[0x3d] = and_acc_absolute_plus_reg(&emulator::Registers::x);
+
+
 
     return supported_instructions;
 }
