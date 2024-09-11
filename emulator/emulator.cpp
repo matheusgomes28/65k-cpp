@@ -172,14 +172,46 @@ inline std::uint16_t zeropage_indexed(emulator::Cpu& cpu, std::uint8_t value, st
 /// @param hsb is the high significant bits, or the second byte after the opcodes.
 /// @param index is the pointer to the register to use as the index add.
 /// @return the resolved target address.
-inline std::uint16_t absolute_indexed(emulator::Cpu& cpu, std::uint8_t lsb, std::uint8_t hsb, std::uint8_t emulator::Registers::*index)
+inline std::uint16_t absolute_indexed(
+    emulator::Cpu& cpu, std::uint8_t lsb, std::uint8_t hsb, std::uint8_t emulator::Registers::*index)
 {
     // Do we want to put these numbers as std::uint16_t?
-    auto const address = (hsb << 8) | lsb;
+    auto const address        = (hsb << 8) | lsb;
     auto const target_address = address + (cpu.reg).*index;
     return static_cast<std::uint16_t>(target_address & 0xffff);
 }
 
+/// @brief This function aids with the fetching of an indexed indirect
+/// opcode mode.
+/// @param cpu the cpu with the memory to operate on
+/// @param val the zeropage memory to apply the index to
+/// @return the target address
+inline std::uint16_t indexed_indirect(emulator::Cpu& cpu, std::uint8_t val)
+{
+    // (hsb << 8) + lsb convert little endian to the address
+    std::uint16_t const indexed_address = static_cast<std::uint16_t>(val + cpu.reg.x);
+    std::uint16_t const zp_addr         = static_cast<std::uint16_t>(indexed_address & 0xff);
+
+    auto const lsb     = cpu.mem[zp_addr];
+    auto const hsb_pos = static_cast<std::uint16_t>((zp_addr + 1) & 0xff);
+    auto const hsb     = cpu.mem[hsb_pos];
+    auto const addr    = static_cast<std::uint16_t>((hsb << 8) | lsb);
+    return addr;
+}
+
+/// @brief This function aids with the fetching of an indirect indexed
+/// opcode mode.
+/// @param cpu the cpu with the memory to operate on
+/// @param val the zeropage memory to fetch the indirect address
+/// @return the target address
+inline std::uint16_t indirect_indexed(emulator::Cpu& cpu, std::uint8_t val)
+{
+    auto const lsb      = cpu.mem[static_cast<std::uint8_t>(val)];
+    auto const hsb_addr = static_cast<std::uint16_t>((val + 1) & 0xff);
+    auto const hsb      = cpu.mem[hsb_addr];
+    auto const addr     = static_cast<std::uint16_t>(((hsb << 8) | lsb) + cpu.reg.y);
+    return addr;
+}
 
 Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
 {
@@ -285,7 +317,7 @@ Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::*to, std::uin
         }
 
         // Do we want to put these numbers as std::uint16_t?
-        std::uint16_t const pos = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], add);
+        std::uint16_t const pos  = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], add);
         std::uint8_t const value = cpu.mem[pos];
 
         (cpu.reg).*to = value;
@@ -323,7 +355,7 @@ Instruction ld_index_indirect(std::uint8_t emulator::Registers::*to, std::uint8_
     };
 }
 
-Instruction ld_indirect_index(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+Instruction ld_indirect_index(std::uint8_t emulator::Registers::*to)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -333,12 +365,7 @@ Instruction ld_indirect_index(std::uint8_t emulator::Registers::*to, std::uint8_
             return std::nullopt;
         }
 
-        // The indirection position should wrap around the zeropage
-        std::uint16_t const zeropage = program[cpu.reg.pc + 1];
-        std::uint16_t const lsb      = cpu.mem[zeropage];
-        std::uint16_t const hsb      = cpu.mem[zeropage + 1];
-        std::uint16_t const pos      = ((hsb << 8) | lsb) + static_cast<std::uint16_t>((cpu.reg).*add);
-
+        auto const pos           = indirect_indexed(cpu, program[cpu.reg.pc + 1]);
         std::uint8_t const value = cpu.mem[pos];
 
         (cpu.reg).*to = value;
@@ -408,7 +435,8 @@ std::optional<InstructionConfig> inc_absolute_plus_x(emulator::Cpu& cpu, std::sp
         return std::nullopt;
     }
 
-    std::uint16_t const pos = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], &emulator::Registers::x);
+    std::uint16_t const pos =
+        absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], &emulator::Registers::x);
 
     cpu.mem[pos]++;
     cpu.flags.z = cpu.mem[pos] == 0;
@@ -752,6 +780,30 @@ Instruction and_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
+std::optional<std::size_t> and_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const addr = indexed_indirect(cpu, program[cpu.reg.pc + 1]);
+    return and_operation<2>(cpu, cpu.mem[addr]);
+}
+
+std::optional<std::size_t> and_acc_indirect_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const addr = indirect_indexed(cpu, program[cpu.reg.pc + 1]);
+    return and_operation<2>(cpu, cpu.mem[addr]);
+}
+
 std::optional<std::size_t> or_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
@@ -819,7 +871,7 @@ Instruction or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-std::optional<std::size_t> or_acc_index_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+std::optional<std::size_t> or_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -827,15 +879,8 @@ std::optional<std::size_t> or_acc_index_indirect(emulator::Cpu& cpu, std::span<c
         return std::nullopt;
     }
 
-    // (hsb << 8) + lsb convert little endian to the address
-    auto const indexed_address = program[cpu.reg.pc + 1] + cpu.reg.x;
-    auto const zp_addr         = static_cast<std::uint8_t>(indexed_address & 0xff);
-
-    auto const lsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr & 0xff)];
-    auto const hsb      = cpu.mem[static_cast<std::uint8_t>((zp_addr + 1) & 0xff)];
-    auto const abs_addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
-
-    return ora_operation<2>(cpu, cpu.mem[abs_addr]);
+    auto const addr = indexed_indirect(cpu, program[cpu.reg.pc + 1]);
+    return ora_operation<2>(cpu, cpu.mem[addr]);
 }
 
 std::optional<std::size_t> or_acc_indirect_index(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
@@ -846,12 +891,8 @@ std::optional<std::size_t> or_acc_indirect_index(emulator::Cpu& cpu, std::span<c
         return std::nullopt;
     }
 
-    auto const zp_addr  = program[cpu.reg.pc + 1];
-    auto const lsb      = cpu.mem[static_cast<std::uint8_t>(zp_addr)];
-    auto const hsb      = cpu.mem[static_cast<std::uint8_t>((zp_addr + 1) & 0xff)];
-    auto const abs_addr = static_cast<std::uint16_t>(((hsb << 8) | lsb) + cpu.reg.y);
-
-    return ora_operation<2>(cpu, cpu.mem[abs_addr]);
+    auto const addr = indirect_indexed(cpu, program[cpu.reg.pc + 1]);
+    return ora_operation<2>(cpu, cpu.mem[addr]);
 }
 
 // TODO : provide support for counting the number of cycles passed
@@ -903,7 +944,7 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0xbd] = ld_absolute_plus_reg(&emulator::Registers::a, &emulator::Registers::x);
     supported_instructions[0xb9] = ld_absolute_plus_reg(&emulator::Registers::a, &emulator::Registers::y);
     supported_instructions[0xa1] = ld_index_indirect(&emulator::Registers::a, &emulator::Registers::x);
-    supported_instructions[0xb1] = ld_indirect_index(&emulator::Registers::a, &emulator::Registers::y);
+    supported_instructions[0xb1] = ld_indirect_index(&emulator::Registers::a);
     supported_instructions[0xad] = ld_absolute(&emulator::Registers::a);
     supported_instructions[0xa2] = ld_immediate(&emulator::Registers::x);
     supported_instructions[0xa6] = ld_zeropage(&emulator::Registers::x);
@@ -953,18 +994,18 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x0d] = or_acc_absolute;
     supported_instructions[0x1d] = or_acc_absolute_plus_reg(&emulator::Registers::x);
     supported_instructions[0x19] = or_acc_absolute_plus_reg(&emulator::Registers::y);
-    supported_instructions[0x01] = or_acc_index_indirect;
+    supported_instructions[0x01] = or_acc_indexed_indirect;
     supported_instructions[0x11] = or_acc_indirect_index;
 
     // AND opcodes
+    supported_instructions[0x21] = and_acc_indexed_indirect;
     supported_instructions[0x25] = and_acc_zeropage;
     supported_instructions[0x29] = and_acc_immediate;
-    supported_instructions[0x35] = and_acc_zeropage_x;
     supported_instructions[0x2d] = and_acc_absolute;
+    supported_instructions[0x31] = and_acc_indirect_indexed;
+    supported_instructions[0x35] = and_acc_zeropage_x;
     supported_instructions[0x39] = and_acc_absolute_plus_reg(&emulator::Registers::y);
     supported_instructions[0x3d] = and_acc_absolute_plus_reg(&emulator::Registers::x);
-
-
 
     return supported_instructions;
 }
