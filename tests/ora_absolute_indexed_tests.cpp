@@ -27,7 +27,7 @@ TEST(ORAAbsoluteTests, PlusXTests)
     std::array<std::tuple<std::uint8_t, std::uint8_t, std::uint8_t, std::uint16_t, std::uint16_t>, 4> const test_cases{{
         {0b0101'0101, 0b0010'1010, 0x00, 0x0000, 0x0000},
         {0b0101'0101, 0b0010'1010, 0x01, 0x00ff, 0x0100},
-        {0b0111'1111, 0b0000'0000, 0xff, 0xff00, 0x00ff},
+        {0b0111'1111, 0b0000'0000, 0xff, 0xff00, 0xffff},
         {0b0010'1010, 0b0101'0101, 0x02, 0xffff, 0x0001},
     }};
 
@@ -63,7 +63,7 @@ TEST(ORAAbsoluteTests, PlusYTests)
     std::array<std::tuple<std::uint8_t, std::uint8_t, std::uint8_t, std::uint16_t, std::uint16_t>, 4> const test_cases{{
         {0b0101'0101, 0b0010'1010, 0x00, 0x0000, 0x0000},
         {0b0101'0101, 0b0010'1010, 0x01, 0x00ff, 0x0100},
-        {0b0111'1111, 0b0000'0000, 0xff, 0xff00, 0x00ff},
+        {0b0111'1111, 0b0000'0000, 0xff, 0xff00, 0xffff},
         {0b0010'1010, 0b0101'0101, 0x02, 0xffff, 0x0001},
     }};
 
