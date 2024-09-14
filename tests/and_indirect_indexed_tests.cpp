@@ -1,6 +1,6 @@
 /*
 This tests will check that the behaviour of the
-"ORA" indirect indexed, 0x11 opcode.
+"AND" indirect indexed, 0x31 opcode.
 
 The instruction takes two bytes: one for the opcode
 itself, and the immediate value of the zp-address
@@ -19,7 +19,7 @@ import emulator;
 #include <utility>
 
 // NOLINTNEXTLINE
-TEST(ORAIndirectIndexedTests, ZeroAddressToLastAddress)
+TEST(ANDIndirectIndexedTests, ZeroAddressToLastAddress)
 {
     // the zero page will point to 0x00, which stores the
     // abs address 0xfffe, then reg.y=0x01 is added to it
@@ -27,13 +27,13 @@ TEST(ORAIndirectIndexedTests, ZeroAddressToLastAddress)
     // complement of the or operation
 
     emulator::Cpu cpu;
-    cpu.reg.a = 0b0101'0101;
-    cpu.reg.y = 0x01;
-    cpu.mem[0xffff] = 0b0010'1010;
-    cpu.mem[0x00] = 0xfe;
-    cpu.mem[0x01] = 0xff;
+    cpu.reg.a       = 0b0111'1111;
+    cpu.reg.y       = 0x01;
+    cpu.mem[0xffff] = 0b0111'1111;
+    cpu.mem[0x00]   = 0xfe;
+    cpu.mem[0x01]   = 0xff;
 
-    std::array<std::uint8_t, 2> const program{0x11, 0x00};
+    std::array<std::uint8_t, 2> const program{0x31, 0x00};
 
     emulator::execute(cpu, program);
 
@@ -49,7 +49,7 @@ TEST(ORAIndirectIndexedTests, ZeroAddressToLastAddress)
 }
 
 // NOLINTNEXTLINE
-TEST(ORAIndirectIndexedTests, ZeropageWrapsAround)
+TEST(ANDIndirectIndexedTests, ZeropageWrapsAround)
 {
     // here we check that the zeropage address
     // is wrapped around to get the address held
@@ -59,13 +59,13 @@ TEST(ORAIndirectIndexedTests, ZeropageWrapsAround)
     // the or operation
 
     emulator::Cpu cpu;
-    cpu.reg.a = 0b0101'0101;
-    cpu.reg.y = 0x01;
-    cpu.mem[0xffff] = 0b0010'1010;
-    cpu.mem[0xff] = 0xfe;
-    cpu.mem[0x00] = 0xff;
+    cpu.reg.a       = 0b0111'1111;
+    cpu.reg.y       = 0x01;
+    cpu.mem[0xffff] = 0b0111'1111;
+    cpu.mem[0xff]   = 0xfe;
+    cpu.mem[0x00]   = 0xff;
 
-    std::array<std::uint8_t, 2> const program{0x11, 0xff};
+    std::array<std::uint8_t, 2> const program{0x31, 0xff};
 
     emulator::execute(cpu, program);
 
@@ -79,7 +79,6 @@ TEST(ORAIndirectIndexedTests, ZeropageWrapsAround)
     // Flags expect
     ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
 }
-
 
 int main(int argc, char** argv)
 {
