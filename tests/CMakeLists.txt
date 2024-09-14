@@ -20,6 +20,8 @@ function(create_tests cpp_file_name)
 endfunction()
 
 create_tests(and_absolute_indexed_tests)
+create_tests(and_indexed_indirect_tests)
+create_tests(and_indirect_indexed_tests)
 create_tests(and_absolute_tests)
 create_tests(and_immediate_tests)
 create_tests(and_zeropage_indexed_tests)
