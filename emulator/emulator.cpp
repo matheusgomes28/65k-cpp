@@ -899,6 +899,8 @@ std::optional<std::size_t> or_acc_indirect_index(emulator::Cpu& cpu, std::span<c
 // from the start of the program
 std::array<Instruction, 256> get_instructions()
 {
+    // TODO : Goal is to have around all ~154 instructions supported
+
     // Byte key indicates which function we need to call
     // to handle the specific instruction
     // using Instruction = std::function<std::optional<std::size_t>(emulator::Cpu&, std::span<const std::uint8_t>)>;

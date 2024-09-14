@@ -19,6 +19,8 @@ function(create_tests cpp_file_name)
   gtest_discover_tests(${cpp_file_name})
 endfunction()
 
+create_tests(and_absolute_indexed_tests)
+create_tests(and_absolute_tests)
 create_tests(and_immediate_tests)
 create_tests(branch_tests)
 create_tests(emulator_tests)
