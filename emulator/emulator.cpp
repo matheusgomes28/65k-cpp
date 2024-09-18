@@ -695,7 +695,7 @@ Instruction branch_flag_value(bool emulator::Flags::*flag)
 
 /// common code for the or related opcodes
 template <std::size_t T>
-std::optional<std::size_t> ora_operation(emulator::Cpu& cpu, std::uint8_t value)
+inline std::optional<std::size_t> ora_operation(emulator::Cpu& cpu, std::uint8_t value)
 {
     cpu.reg.a   = cpu.reg.a | value;
     cpu.flags.n = 0b1000'0000 & cpu.reg.a;
@@ -704,7 +704,7 @@ std::optional<std::size_t> ora_operation(emulator::Cpu& cpu, std::uint8_t value)
 }
 
 template <std::size_t T>
-std::optional<std::size_t> and_operation(emulator::Cpu& cpu, std::uint8_t value)
+inline std::optional<std::size_t> and_operation(emulator::Cpu& cpu, std::uint8_t value)
 {
     cpu.reg.a   = cpu.reg.a & value;
     cpu.flags.n = 0b1000'0000 & cpu.reg.a;
@@ -712,7 +712,107 @@ std::optional<std::size_t> and_operation(emulator::Cpu& cpu, std::uint8_t value)
     return std::make_optional<std::size_t>(T);
 }
 
+template <std::size_t T>
+std::optional<std::size_t> xor_operation(emulator::Cpu& cpu, std::uint8_t value)
+{
+    cpu.reg.a   = cpu.reg.a ^ value;
+    cpu.flags.n = 0b1000'0000 & cpu.reg.a;
+    cpu.flags.z = !static_cast<bool>(cpu.reg.a);
+    return std::make_optional<std::size_t>(T);
+}
+
 // Logical operations
+std::optional<std::size_t> xor_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    return xor_operation<2>(cpu, program[cpu.reg.pc + 1]);
+}
+
+std::optional<std::size_t> xor_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const offset = program[cpu.reg.pc + 1];
+    return xor_operation<2>(cpu, cpu.mem[offset]);
+}
+
+std::optional<std::size_t> xor_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    std::uint16_t const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
+    return xor_operation<2>(cpu, cpu.mem[pos]);
+}
+
+std::optional<std::size_t> xor_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    // (hsb << 8) + lsb convert little endian to the address
+    auto const lsb  = program[cpu.reg.pc + 1];
+    auto const hsb  = program[cpu.reg.pc + 2];
+    auto const addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
+
+    return xor_operation<3>(cpu, cpu.mem[addr]);
+}
+
+Instruction xor_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
+    {
+        ENABLE_PROFILER(cpu);
+        if ((cpu.reg.pc + 2) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+        auto const addr = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], reg);
+
+        return xor_operation<3>(cpu, cpu.mem[addr]);
+    };
+}
+
+std::optional<std::size_t> xor_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const addr = indexed_indirect(cpu, program[cpu.reg.pc + 1]);
+    return xor_operation<2>(cpu, cpu.mem[addr]);
+}
+
+std::optional<std::size_t> xor_acc_indirect_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const addr = indirect_indexed(cpu, program[cpu.reg.pc + 1]);
+    return xor_operation<2>(cpu, cpu.mem[addr]);
+}
+
 std::optional<std::size_t> and_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
@@ -1008,6 +1108,16 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x35] = and_acc_zeropage_x;
     supported_instructions[0x39] = and_acc_absolute_plus_reg(&emulator::Registers::y);
     supported_instructions[0x3d] = and_acc_absolute_plus_reg(&emulator::Registers::x);
+
+    // XOR opcodes
+    supported_instructions[0x49] = xor_acc_immediate;
+    supported_instructions[0x45] = xor_acc_zeropage;
+    supported_instructions[0x55] = xor_acc_zeropage_x;
+    supported_instructions[0x4d] = xor_acc_absolute;
+    supported_instructions[0x5d] = xor_acc_absolute_plus_reg(&emulator::Registers::x);
+    supported_instructions[0x59] = xor_acc_absolute_plus_reg(&emulator::Registers::y);
+    supported_instructions[0x41] = xor_acc_indexed_indirect;
+    supported_instructions[0x51] = xor_acc_indirect_indexed;
 
     return supported_instructions;
 }
