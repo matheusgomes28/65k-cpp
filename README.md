@@ -12,12 +12,11 @@ This repository contains the source code for a 6502 Emulator, written in C++. Th
 To get started with the 65k-cpp emulator, clone the repository and follow the instructions below:
 
 The tools needed to build are:
-    - `conan2` for getting the third party libraries.
     - `cmake` version 3.28 or above.
+    - `ninja` version 1.11 or above.
 
 ```bash
 git clone https://github.com/matheusgomes28/65k-cpp.git
-conan install . --output-folder="conan/deb" -sbuild_type=Debug --build=missing
 cmake --preset unix-rel-ninja
 cmake --build --preset unit-rel-ninja
 ```
