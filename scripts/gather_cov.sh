@@ -19,12 +19,12 @@ lcov --capture --directory . --output-file lcov.info \
 
 
 SYSTEM_DIR="/usr/"
-CONAN_DIR="${HOME}/.conan2/"
+CPM_DIR="${HOME}/.cpm/"
 
 # Remove the system & test dirs
 lcov --ignore-errors inconsistent --remove lcov.info "${SYSTEM_DIR}*" --output-file lcov.info
-lcov --ignore-errors inconsistent --remove lcov.info "${CONAN_DIR}*" --output-file lcov.info
 lcov --ignore-errors inconsistent --remove lcov.info "${PROJECT_DIR}/tests*" --output-file lcov.info
+lcov --ignore-errors inconsistent --remove lcov.info "${CPM_DIR}*" --output-file lcov.info
 
 # Generate HTML report into coverage/
 genhtml lcov.info --ignore-errors inconsistent --ignore-errors corrupt --output-directory coverage > coverage_stats.txt

@@ -2,20 +2,6 @@
     "version": 2,
     "configurePresets": [
         {
-            "name": "conan-deb",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/conan/deb/conan_toolchain.cmake"
-            }
-        },
-        {
-            "name": "conan-rel",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/conan/rel/conan_toolchain.cmake"
-            }
-        },
-        {
             "name": "rel",
             "hidden": true,
             "cacheVariables": {
@@ -98,7 +84,7 @@
             "name": "unix-rel-ninja",
             "displayName": "Unix Ninja Clang Release",
             "binaryDir": "${sourceDir}/build/unix-rel-ninja",
-            "inherits": ["unix-ninja", "rel", "conan-rel"],
+            "inherits": ["unix-ninja", "rel"],
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/unix-rel-ninja/install",
                 "BUILD_PROFILER": true
@@ -117,7 +103,7 @@
             "name": "unix-deb",
             "displayName": "Unix Make Debug",
             "binaryDir": "${sourceDir}/build/unix-deb",
-            "inherits": ["unix-make", "deb", "conan-deb"],
+            "inherits": ["unix-make", "deb"],
             "cacheVariables": {
                 "CMAKE_CXX_FLAGS": "-O0 --coverage -g -fsanitize=address",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/unix-deb/install"
@@ -127,7 +113,7 @@
             "name": "unix-deb-ninja",
             "displayName": "Unix Ninja Clang Debug",
             "binaryDir": "${sourceDir}/build/unix-deb-ninja",
-            "inherits": ["unix-ninja", "deb", "conan-deb"],
+            "inherits": ["unix-ninja", "deb"],
             "cacheVariables": {
                 "CMAKE_CXX_FLAGS": "-O0 --coverage -g -fsanitize=address",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/unix-deb-ninja/install",
@@ -157,7 +143,7 @@
             "name": "vs2022-deb",
             "displayName": "Visual Studio 2022 Debug",
             "binaryDir": "${sourceDir}/build/vs2022-deb",
-            "inherits": ["vs2022", "deb", "conan-deb"],
+            "inherits": ["vs2022", "deb"],
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/vs2022-deb/install"
             }
@@ -175,7 +161,7 @@
             "name": "vs2022-deb-shared",
             "displayName": "Visual Studio 2022 Debug Shared",
             "binaryDir": "${sourceDir}/build/vs2022-deb-shared",
-            "inherits": ["vs2022-shared", "deb", "conan-deb"],
+            "inherits": ["vs2022-shared", "deb"],
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/vs2022-rel/install"
             }

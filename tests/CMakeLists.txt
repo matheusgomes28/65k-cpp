@@ -1,9 +1,6 @@
 include(CTest)
 include(GoogleTest)
 
-find_package(GTest REQUIRED COMPONENTS gtest_main)
-
-
 # This is meant to be used on single .cpp files that
 # export GTest functions. Use "create_tests" by calling
 # it with the filename minus the extension.

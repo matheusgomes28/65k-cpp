@@ -1,5 +1,3 @@
-find_package(fmt REQUIRED)
-
 add_library(emulator)
 target_sources(emulator
   PUBLIC

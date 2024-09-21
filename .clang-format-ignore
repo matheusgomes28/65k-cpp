@@ -1,3 +1,2 @@
 # Ignore all stuff in generated folders
 build/*
-conan/*

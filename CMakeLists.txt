@@ -7,6 +7,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN On)
 
+add_subdirectory(dependencies)
+
 option(CLOCK_SPEED_MHZ "The clock speed for the processor")
 option(BUILD_PROFILER "Build profiling for the instruction handlers")
 
