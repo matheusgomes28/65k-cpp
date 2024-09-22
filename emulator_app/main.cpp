@@ -81,7 +81,10 @@ int main(int argc, char** argv)
 
     std::vector<char> program_contents{(std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>()};
 
-    emulator::execute(easy65k, {reinterpret_cast<std::uint8_t*>(program_contents.data()), program_contents.size()});
+    if (!emulator::execute(easy65k, {reinterpret_cast<std::uint8_t*>(program_contents.data()), program_contents.size()}))
+    {
+        std::cout << std::format("failed to execute the program\n");
+    }
 
     for (auto const& [function, profile] : easy65k.current_profile())
     {

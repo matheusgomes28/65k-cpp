@@ -17,7 +17,7 @@ TEST(EmulatorTests, EmulateInxNoFlag)
     for (auto const& program : programs)
     {
         emulator::Cpu cpu;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.x, program[1] + 1);
         ASSERT_EQ(cpu.reg.sp, 0x00);
@@ -37,7 +37,7 @@ TEST(EmulatorTests, EmulateInyNoFlag)
     for (auto const& program : programs)
     {
         emulator::Cpu cpu;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.y, program[1] + 1);
         ASSERT_EQ(cpu.reg.sp, 0x00);
@@ -59,7 +59,7 @@ TEST(EmulatorTests, EmulateDexNoFlag)
     for (auto const& program : programs)
     {
         emulator::Cpu cpu;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.x, program[1] - 1);
         ASSERT_EQ(cpu.reg.sp, 0x00);
@@ -79,7 +79,7 @@ TEST(EmulatorTests, EmulateDeyNoFlag)
     for (auto const& program : programs)
     {
         emulator::Cpu cpu;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.y, program[1] - 1);
         ASSERT_EQ(cpu.reg.sp, 0x00);
@@ -101,7 +101,7 @@ TEST(EmulatorTests, EmulateCpxXGreaterThanValue)
     for (auto const& program : programs)
     {
         emulator::Cpu cpu;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.x, program[1]);
         ASSERT_EQ(cpu.reg.sp, 0x00);
@@ -127,7 +127,7 @@ TEST(EmulatorTests, EmulateCpxSameValues)
     for (auto const& program : programs)
     {
         emulator::Cpu cpu;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.x, program[1]);
         ASSERT_EQ(cpu.reg.sp, 0x00);
@@ -152,7 +152,7 @@ TEST(EmulatorTests, EmulateCpxSetCarry)
     for (auto const& program : programs)
     {
         emulator::Cpu cpu;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.x, program[1]);
         ASSERT_EQ(cpu.reg.sp, 0x00);

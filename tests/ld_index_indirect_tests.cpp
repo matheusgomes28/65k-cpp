@@ -30,7 +30,7 @@ TEST(LDTests, LDAIndexIndirectXNonZero)
         0xa1,
         0x00,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x5a);
@@ -58,7 +58,7 @@ TEST(LDTests, LDAIndexIndirectXWithZero)
         0xa1,
         0x00,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
@@ -85,7 +85,7 @@ TEST(LDTests, LDAIndexIndirectXNegative)
         0xa1,
         0x00,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0xff);
@@ -115,7 +115,7 @@ TEST(LDTests, LDAIndexIndirectXNonZeroPosWrap)
         0xa1,
         0xee,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x5a);

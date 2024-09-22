@@ -1152,7 +1152,7 @@ std::optional<InstructionConfig> execute_next(
 export namespace emulator
 {
 
-    std::size_t execute(Cpu& cpu, std::span<const std::uint8_t> program)
+    [[nodiscard]] std::optional<std::size_t> execute(Cpu& cpu, std::span<const std::uint8_t> program)
     {
         std::size_t n_cycles = 0;
         ENABLE_PROFILER(cpu);
@@ -1163,7 +1163,7 @@ export namespace emulator
             auto maybe_increment = execute_next(cpu, program, instructions);
             if (!maybe_increment)
             {
-                return false;
+                return std::nullopt;
             }
 
             cpu.reg.pc += maybe_increment->bytes;

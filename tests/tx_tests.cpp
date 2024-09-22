@@ -24,7 +24,7 @@ TEST(TXTests, TXANoFlags)
     {
         emulator::Cpu cpu;
         cpu.reg.x = init_x;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, init_x);
         ASSERT_EQ(cpu.reg.x, init_x);
@@ -54,7 +54,7 @@ TEST(TXTests, TAXNoFlags)
     {
         emulator::Cpu cpu;
         cpu.reg.a = init_a;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, init_a);
         ASSERT_EQ(cpu.reg.x, init_a);
@@ -84,7 +84,7 @@ TEST(TXTests, TAYNoFlags)
     {
         emulator::Cpu cpu;
         cpu.reg.a = init_a;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, init_a);
         ASSERT_EQ(cpu.reg.x, 0x00);
@@ -114,7 +114,7 @@ TEST(TXTests, TSXNoFlags)
     {
         emulator::Cpu cpu;
         cpu.reg.sp = init_sp;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, init_sp);
@@ -144,7 +144,7 @@ TEST(TXTests, TYANoFlags)
     {
         emulator::Cpu cpu;
         cpu.reg.y = init_y;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, init_y);
         ASSERT_EQ(cpu.reg.x, 0x00);
@@ -177,7 +177,7 @@ TEST(TXTests, TXSNoFlags)
     {
         emulator::Cpu cpu;
         cpu.reg.x = init_x;
-        emulator::execute(cpu, {program.data(), program.size()});
+        ASSERT_TRUE(emulator::execute(cpu, {program.data(), program.size()}));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, init_x);
@@ -198,7 +198,7 @@ TEST(TXTests, TXAZeroFlag)
 
     emulator::Cpu cpu;
     cpu.reg.x = 0x00;
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -219,7 +219,7 @@ TEST(TXTests, TAXZeroFlag)
     cpu.reg.a = 0x00;
     cpu.reg.x = 0xFF;
 
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -241,7 +241,7 @@ TEST(TXTests, TAYZeroFlag)
     cpu.reg.a = 0x00;
     cpu.reg.y = 0xFF;
 
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -263,7 +263,7 @@ TEST(TXTests, TSXZeroFlag)
     cpu.reg.sp = 0x00;
     cpu.reg.x  = 0xFF;
 
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -284,7 +284,7 @@ TEST(TXTests, TYAZeroFlag)
     emulator::Cpu cpu;
     cpu.reg.y = 0x00;
     cpu.reg.a = 0xFF;
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
@@ -316,7 +316,7 @@ TEST(TXTests, TXANegativeFlag)
     {
         emulator::Cpu cpu;
         cpu.reg.x = init_x;
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         ASSERT_EQ(cpu.reg.a, init_x);
         ASSERT_EQ(cpu.reg.x, init_x);
@@ -346,7 +346,7 @@ TEST(TXTests, TAXNegativeFlag)
     {
         emulator::Cpu cpu;
         cpu.reg.a = init_a;
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         ASSERT_EQ(cpu.reg.a, init_a);
         ASSERT_EQ(cpu.reg.x, init_a);
@@ -377,7 +377,7 @@ TEST(TXTests, TAYNegativeFlag)
     {
         emulator::Cpu cpu;
         cpu.reg.a = init_a;
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         ASSERT_EQ(cpu.reg.a, init_a);
         ASSERT_EQ(cpu.reg.x, 0);
@@ -408,7 +408,7 @@ TEST(TXTests, TSXNegativeFlag)
     {
         emulator::Cpu cpu;
         cpu.reg.sp = init_sp;
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, init_sp);
@@ -440,7 +440,7 @@ TEST(TXTests, TYANegativeFlag)
     {
         emulator::Cpu cpu;
         cpu.reg.y = init_y;
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         ASSERT_EQ(cpu.reg.a, init_y);
         ASSERT_EQ(cpu.reg.x, 0x00);

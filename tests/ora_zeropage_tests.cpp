@@ -39,11 +39,11 @@ TEST(ORAZeropageTests, NoFlagOperations)
         cpu.reg.a = init_acc;
         cpu.mem[static_cast<std::uint8_t>(address)] = value;
 
-        std::array<std::uint8_t, 3> program{
+        std::array<std::uint8_t, 2> program{
             0x05,
             static_cast<std::uint8_t>(address),
         };
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, init_acc | value);
@@ -80,7 +80,7 @@ TEST(ORAZeropageTests, NegativeFlagOperation)
             0x05,
             static_cast<std::uint8_t>(address),
         };
-        emulator::execute(cpu, program);
+        ASSERT_TRUE(emulator::execute(cpu, program));
 
         // Registry expect
         ASSERT_EQ(cpu.reg.a, acc | value);
@@ -105,7 +105,7 @@ TEST(ORAZeropageTests, ZeroFlagOperation)
         0x05,
         0x88,
     };
-    emulator::execute(cpu, program);
+    ASSERT_TRUE(emulator::execute(cpu, program));
 
     // Registry expect
     ASSERT_EQ(cpu.reg.a, 0x00);
@@ -136,7 +136,7 @@ TEST(ORAZeropageTests, MakeSureFlagsAreSound)
                 0x05,
                 0x88,
             };
-            emulator::execute(cpu, program);
+            ASSERT_TRUE(emulator::execute(cpu, program));
 
             // Registry expect
             ASSERT_EQ(cpu.reg.a, val | acc);
