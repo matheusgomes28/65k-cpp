@@ -79,7 +79,7 @@ export namespace emulator
         std::uint8_t x;
         std::uint8_t y;
         std::uint16_t pc;
-        std::uint8_t sp;
+        std::uint8_t sp{0xff};
     };
 
     struct Flags
@@ -212,6 +212,21 @@ inline std::uint16_t indirect_indexed(emulator::Cpu& cpu, std::uint8_t val)
     auto const addr     = static_cast<std::uint16_t>(((hsb << 8) | lsb) + cpu.reg.y);
     return addr;
 }
+
+/* Stack Related Functions */
+std::optional<InstructionConfig> push_accumulator_to_stack(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    // TODO : can we detect stack overflows?
+    // TODO : according to Masswerk, we don't set any flags
+
+    std::uint16_t const mem_loc = static_cast<std::uint16_t>(0x0100) + static_cast<std::uint16_t>(cpu.reg.sp);
+    cpu.mem[mem_loc] = cpu.reg.a;
+    --cpu.reg.sp;
+
+    return std::make_optional<InstructionConfig>(1, 0);
+}
+/* End of Stack Related Functions */
+
 
 Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
 {
@@ -1118,6 +1133,9 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x59] = eor_acc_absolute_plus_reg(&emulator::Registers::y);
     supported_instructions[0x41] = eor_acc_indexed_indirect;
     supported_instructions[0x51] = eor_acc_indirect_indexed;
+
+    // Stack-related opcodes
+    supported_instructions[0x48] = push_accumulator_to_stack;
 
     return supported_instructions;
 }

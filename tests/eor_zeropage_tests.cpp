@@ -52,7 +52,7 @@ TEST(EORZeropageTests, NoFlagOperations)
         ASSERT_EQ(cpu.reg.a, 0b0111'1111);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -87,7 +87,7 @@ TEST(EORZeropageTests, NegativeFlagOperation)
         ASSERT_EQ(cpu.reg.a, 0b1111'1111);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -125,7 +125,7 @@ TEST(EORZeropageTests, ZeroFlagOperation)
         ASSERT_EQ(cpu.reg.a, 0b0000'0000);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect

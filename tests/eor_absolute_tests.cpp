@@ -44,7 +44,7 @@ TEST(EORAbsoluteTests, GeneralTests)
         // Registry expect
         ASSERT_EQ(cpu.reg.a, init_acc ^ value);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x03);
 
         // Flags expect

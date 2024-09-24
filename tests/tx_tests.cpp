@@ -29,7 +29,7 @@ TEST(TXTests, TXANoFlags)
         ASSERT_EQ(cpu.reg.a, init_x);
         ASSERT_EQ(cpu.reg.x, init_x);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
 
         ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
@@ -59,7 +59,7 @@ TEST(TXTests, TAXNoFlags)
         ASSERT_EQ(cpu.reg.a, init_a);
         ASSERT_EQ(cpu.reg.x, init_a);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
 
         ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
@@ -89,7 +89,7 @@ TEST(TXTests, TAYNoFlags)
         ASSERT_EQ(cpu.reg.a, init_a);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, init_a);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
 
         ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
@@ -149,7 +149,7 @@ TEST(TXTests, TYANoFlags)
         ASSERT_EQ(cpu.reg.a, init_y);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, init_y);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
 
         ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
@@ -321,7 +321,7 @@ TEST(TXTests, TXANegativeFlag)
         ASSERT_EQ(cpu.reg.a, init_x);
         ASSERT_EQ(cpu.reg.x, init_x);
         ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
     }
 }
@@ -352,7 +352,7 @@ TEST(TXTests, TAXNegativeFlag)
         ASSERT_EQ(cpu.reg.x, init_a);
         ASSERT_EQ(cpu.reg.y, 0);
         ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
     }
 }
@@ -383,7 +383,7 @@ TEST(TXTests, TAYNegativeFlag)
         ASSERT_EQ(cpu.reg.x, 0);
         ASSERT_EQ(cpu.reg.y, init_a);
         ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
     }
 }
@@ -445,7 +445,7 @@ TEST(TXTests, TYANegativeFlag)
         ASSERT_EQ(cpu.reg.a, init_y);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, init_y);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
 
         ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
