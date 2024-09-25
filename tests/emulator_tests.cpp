@@ -20,7 +20,7 @@ TEST(EmulatorTests, EmulateInxNoFlag)
         emulator::execute(cpu, {program.data(), program.size()});
 
         ASSERT_EQ(cpu.reg.x, program[1] + 1);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x03);
     }
 }
@@ -40,7 +40,7 @@ TEST(EmulatorTests, EmulateInyNoFlag)
         emulator::execute(cpu, {program.data(), program.size()});
 
         ASSERT_EQ(cpu.reg.y, program[1] + 1);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x03);
     }
 }
@@ -62,7 +62,7 @@ TEST(EmulatorTests, EmulateDexNoFlag)
         emulator::execute(cpu, {program.data(), program.size()});
 
         ASSERT_EQ(cpu.reg.x, program[1] - 1);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x03);
     }
 }
@@ -82,7 +82,7 @@ TEST(EmulatorTests, EmulateDeyNoFlag)
         emulator::execute(cpu, {program.data(), program.size()});
 
         ASSERT_EQ(cpu.reg.y, program[1] - 1);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x03);
     }
 }
@@ -104,7 +104,7 @@ TEST(EmulatorTests, EmulateCpxXGreaterThanValue)
         emulator::execute(cpu, {program.data(), program.size()});
 
         ASSERT_EQ(cpu.reg.x, program[1]);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x04);
 
         // Flags
@@ -130,7 +130,7 @@ TEST(EmulatorTests, EmulateCpxSameValues)
         emulator::execute(cpu, {program.data(), program.size()});
 
         ASSERT_EQ(cpu.reg.x, program[1]);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x04);
 
         // Flags
@@ -155,7 +155,7 @@ TEST(EmulatorTests, EmulateCpxSetCarry)
         emulator::execute(cpu, {program.data(), program.size()});
 
         ASSERT_EQ(cpu.reg.x, program[1]);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x04);
 
         // Flags

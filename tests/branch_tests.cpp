@@ -57,7 +57,7 @@ TEST(BranchingTests, BranchOnCarrySetWhenUnset)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -88,7 +88,7 @@ TEST(BranchingTests, BranchOnCarrySetWhenSet)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, expected_pc);
 
         // Flags expect
@@ -119,7 +119,7 @@ TEST(BranchingTests, BranchOnCarryClearWhenSet)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -150,7 +150,7 @@ TEST(BranchingTests, BranchOnCarryClearWhenUnset)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, expected_pc);
 
         // Flags expect
@@ -181,7 +181,7 @@ TEST(BranchingTests, BranchOnZeroSetWhenUnset)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -212,7 +212,7 @@ TEST(BranchingTests, BranchOnZeroSetWhenSet)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, expected_pc);
 
         // Flags expect
@@ -243,7 +243,7 @@ TEST(BranchingTests, BranchOnZeroClearWhenSet)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -274,7 +274,7 @@ TEST(BranchingTests, BranchOnZeroClearWhenUnset)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, expected_pc);
 
         // Flags expect
@@ -305,7 +305,7 @@ TEST(BranchingTests, BranchOnNegativeSetWhenUnset)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -336,7 +336,7 @@ TEST(BranchingTests, BranchOnNegativeSetWhenSet)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, expected_pc);
 
         // Flags expect
@@ -367,7 +367,7 @@ TEST(BranchingTests, BranchOnNegativeClearWhenSet)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -398,7 +398,7 @@ TEST(BranchingTests, BranchOnNegativeClearWhenUnset)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, expected_pc);
 
         // Flags expect
@@ -429,7 +429,7 @@ TEST(BranchingTests, BranchOnOverflowSetWhenUnset)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -460,7 +460,7 @@ TEST(BranchingTests, BranchOnOverflowSetWhenSet)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, expected_pc);
 
         // Flags expect
@@ -491,7 +491,7 @@ TEST(BranchingTests, BranchOnOverflowClearWhenSet)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -522,7 +522,7 @@ TEST(BranchingTests, BranchOnOverflowClearWhenUnset)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, expected_pc);
 
         // Flags expect

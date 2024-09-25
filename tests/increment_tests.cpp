@@ -39,7 +39,7 @@ TEST(IncrementTests, INXNoFlags)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, init_x + 1);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
 
         ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
@@ -67,7 +67,7 @@ TEST(IncrementTests, INYNoFlags)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, init_y + 1);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
 
         ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
@@ -96,7 +96,7 @@ TEST(IncrementTests, INCZeropageNoFlags)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         ASSERT_EQ(cpu.mem[init_v], init_v + 1);
@@ -128,7 +128,7 @@ TEST(IncrementTests, INCZeropagePlusXNoFlags)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x0a);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         ASSERT_EQ(cpu.mem[pos], init_v + 1);
@@ -162,7 +162,7 @@ TEST(IncrementTests, INCAbsoluteNoFlags)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x03);
 
         ASSERT_EQ(cpu.mem[pos], init_v + 1);
@@ -197,7 +197,7 @@ TEST(IncrementTests, INCAbsolutePluxXNoFlags)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x0a);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x03);
 
         ASSERT_EQ(cpu.mem[pos], init_v + 1);
@@ -355,7 +355,7 @@ TEST(IncrementTests, INXNegativeFlag)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, init_x + 1);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
 
         ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
@@ -387,7 +387,7 @@ TEST(IncrementTests, INYNegativeFlag)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, init_y + 1);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x01);
 
         ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
@@ -421,7 +421,7 @@ TEST(IncrementTests, INCZeropageNegativeFlag)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         ASSERT_EQ(cpu.mem[init_v], init_v + 1);
@@ -460,7 +460,7 @@ TEST(IncrementTests, INCZeropagePlusXNegativeFlag)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, init_v);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         ASSERT_EQ(cpu.mem[pos], init_v + 1);
@@ -500,7 +500,7 @@ TEST(IncrementTests, INCAbsoluteNegativeFlag)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x03);
 
         ASSERT_EQ(cpu.mem[pos], init_v + 1);
@@ -541,7 +541,7 @@ TEST(IncrementTests, INCAbsolutePluxXNegativeFlag)
         ASSERT_EQ(cpu.reg.a, 0x00);
         ASSERT_EQ(cpu.reg.x, 0x0a);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x03);
 
         ASSERT_EQ(cpu.mem[pos], init_v + 1);

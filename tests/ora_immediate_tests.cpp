@@ -47,7 +47,7 @@ TEST(ORAImmediateTests, NoFlagOperations)
         ASSERT_EQ(cpu.reg.a, init_acc | im_value);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -83,7 +83,7 @@ TEST(ORAImmediateTests, NegativeFlagOperation)
         ASSERT_EQ(cpu.reg.a, init_acc | im_value);
         ASSERT_EQ(cpu.reg.x, 0x00);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x02);
 
         // Flags expect
@@ -137,7 +137,7 @@ TEST(ORAImmediateTests, MakeSureFlagsAreSound)
             ASSERT_EQ(cpu.reg.a, val | acc);
             ASSERT_EQ(cpu.reg.x, 0x00);
             ASSERT_EQ(cpu.reg.y, 0x00);
-            ASSERT_EQ(cpu.reg.sp, 0x00);
+            ASSERT_EQ(cpu.reg.sp, 0xFF);
             ASSERT_EQ(cpu.reg.pc, 0x02);
 
             // Flags expect

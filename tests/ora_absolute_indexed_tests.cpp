@@ -48,7 +48,7 @@ TEST(ORAAbsoluteTests, PlusXTests)
         ASSERT_EQ(cpu.reg.a, init_acc | value);
         ASSERT_EQ(cpu.reg.x, init_x);
         ASSERT_EQ(cpu.reg.y, 0x00);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x03);
 
         // Flags expect
@@ -83,7 +83,7 @@ TEST(ORAAbsoluteTests, PlusYTests)
         // Registry expect
         ASSERT_EQ(cpu.reg.a, init_acc | value);
         ASSERT_EQ(cpu.reg.y, init_y);
-        ASSERT_EQ(cpu.reg.sp, 0x00);
+        ASSERT_EQ(cpu.reg.sp, 0xFF);
         ASSERT_EQ(cpu.reg.pc, 0x03);
 
         // Flags expect
