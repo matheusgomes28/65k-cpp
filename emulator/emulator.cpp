@@ -73,15 +73,6 @@ export namespace emulator
         std::string _error_msg;
     };
 
-    struct Registers
-    {
-        std::uint8_t a;
-        std::uint8_t x;
-        std::uint8_t y;
-        std::uint16_t pc;
-        std::uint8_t sp{0xff};
-    };
-
     struct Flags
     {
         bool n;
@@ -91,6 +82,15 @@ export namespace emulator
         bool i;
         bool z;
         bool c;
+    };
+
+    struct Registers
+    {
+        std::uint8_t a;
+        std::uint8_t x;
+        std::uint8_t y;
+        std::uint16_t pc;
+        std::uint8_t sp{0xff};
     };
 
     bool operator==(Flags const& lhs, Flags const& rhs)
@@ -113,6 +113,22 @@ export namespace emulator
 
         // Clock speed for this particular CPU
         double clock_speed = CLOCK_SPEED_MHZ;
+
+        std::uint8_t sr() const
+        {
+            // clang-format off
+            std::uint8_t const sp_val = 
+                static_cast<int>(flags.n) << 7 |
+                static_cast<int>(flags.v) << 6 |
+                static_cast<int>(flags.b) << 4 |
+                static_cast<int>(flags.d) << 3 |
+                static_cast<int>(flags.i) << 2 |
+                static_cast<int>(flags.z) << 1 |
+                static_cast<int>(flags.c);
+            // clang-format on
+
+            return sp_val;
+        }
 
 #ifdef BUILD_PROFILER
         // If profiling is enabled, create space for a bookeper
@@ -227,6 +243,17 @@ std::optional<InstructionConfig> push_accumulator_to_stack(emulator::Cpu& cpu, s
 }
 /* End of Stack Related Functions */
 
+/* Flag setting opcodes */
+Instruction set_flag(bool emulator::Flags::*f)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
+    {
+        ENABLE_PROFILER(cpu);
+        (cpu.flags).*f = true;
+        return std::make_optional<InstructionConfig>(1);
+    };
+}
+/* End of flag setting opcodes */
 
 Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
 {
@@ -1136,6 +1163,11 @@ std::array<Instruction, 256> get_instructions()
 
     // Stack-related opcodes
     supported_instructions[0x48] = push_accumulator_to_stack;
+
+    // Flag setting opcodes
+    supported_instructions[0x38] = set_flag(&emulator::Flags::c);
+    supported_instructions[0x78] = set_flag(&emulator::Flags::i);
+    supported_instructions[0xf8] = set_flag(&emulator::Flags::d);
 
     return supported_instructions;
 }
