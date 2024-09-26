@@ -213,8 +213,21 @@ inline std::uint16_t indirect_indexed(emulator::Cpu& cpu, std::uint8_t val)
     return addr;
 }
 
+// TODO : can we somehow abstract these two stack pushing functions?
 /* Stack Related Functions */
 std::optional<InstructionConfig> push_accumulator_to_stack(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    // TODO : can we detect stack overflows?
+    // TODO : according to Masswerk, we don't set any flags
+
+    std::uint16_t const mem_loc = static_cast<std::uint16_t>(0x0100) + static_cast<std::uint16_t>(cpu.reg.sp);
+    cpu.mem[mem_loc] = cpu.reg.a;
+    --cpu.reg.sp;
+
+    return std::make_optional<InstructionConfig>(1, 0);
+}
+
+std::optional<InstructionConfig> push_status_register_to_stack(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     // TODO : can we detect stack overflows?
     // TODO : according to Masswerk, we don't set any flags
