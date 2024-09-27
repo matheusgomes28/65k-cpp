@@ -38,7 +38,7 @@ TEST(LDTests, LDAIndirectIndexYNonZero)
     ASSERT_EQ(cpu.reg.a, 0x5a);
     ASSERT_EQ(cpu.reg.x, 0x00);
     ASSERT_EQ(cpu.reg.y, 0x01);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x02);
 
     // Flags expect
@@ -67,7 +67,7 @@ TEST(LDTests, LDAIndirectIndexYWithZero)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
     ASSERT_EQ(cpu.reg.y, 0x01);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x02);
 
     // Flags expect
@@ -95,15 +95,9 @@ TEST(LDTests, LDAIndirectIndexYWithNegative)
     ASSERT_EQ(cpu.reg.a, 0xff);
     ASSERT_EQ(cpu.reg.x, 0x00);
     ASSERT_EQ(cpu.reg.y, 0x01);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x02);
 
     // Flags expect
     ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
-}
-
-int main(int argc, char** argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

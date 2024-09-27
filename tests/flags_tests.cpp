@@ -94,9 +94,3 @@ TEST(FlagsTests, SRGetsBreak)
     cpu.flags.b = true;
     ASSERT_EQ(cpu.sr(), 0b0001'0000);
 }
-
-int main(int argc, char** argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

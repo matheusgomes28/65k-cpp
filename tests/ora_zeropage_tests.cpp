@@ -111,7 +111,7 @@ TEST(ORAZeropageTests, ZeroFlagOperation)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x02);
 
     // Flags expect
@@ -162,10 +162,4 @@ TEST(ORAZeropageTests, MakeSureFlagsAreSound)
             }
         }
     }
-}
-
-int main(int argc, char** argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

@@ -92,9 +92,3 @@ TEST(EORbsoluteTests, PlusYTests)
         ASSERT_EQ(cpu.flags, exp_flags);
     }
 }
-
-int main(int argc, char** argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

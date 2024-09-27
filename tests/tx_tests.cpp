@@ -202,7 +202,7 @@ TEST(TXTests, TXAZeroFlag)
 
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x01);
 
     ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
@@ -224,7 +224,7 @@ TEST(TXTests, TAXZeroFlag)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x01);
 
     ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
@@ -246,7 +246,7 @@ TEST(TXTests, TAYZeroFlag)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x01);
 
     ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
@@ -289,7 +289,7 @@ TEST(TXTests, TYAZeroFlag)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x01);
 
     ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
@@ -450,10 +450,4 @@ TEST(TXTests, TYANegativeFlag)
 
         ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
     }
-}
-
-int main(int argc, char** argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

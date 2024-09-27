@@ -36,7 +36,7 @@ TEST(LDTests, LDAIndexIndirectXNonZero)
     ASSERT_EQ(cpu.reg.a, 0x5a);
     ASSERT_EQ(cpu.reg.x, 0x13);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x02);
 
     // Flags expect
@@ -64,7 +64,7 @@ TEST(LDTests, LDAIndexIndirectXWithZero)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x13);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x02);
 
     // Flags expect
@@ -91,7 +91,7 @@ TEST(LDTests, LDAIndexIndirectXNegative)
     ASSERT_EQ(cpu.reg.a, 0xff);
     ASSERT_EQ(cpu.reg.x, 0x13);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x02);
 
     // Flags expect
@@ -121,15 +121,9 @@ TEST(LDTests, LDAIndexIndirectXNonZeroPosWrap)
     ASSERT_EQ(cpu.reg.a, 0x5a);
     ASSERT_EQ(cpu.reg.x, 0x12);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x02);
 
     // Flags expect
     ASSERT_EQ(cpu.flags, make_flags(0b0000'0000));
-}
-
-int main(int argc, char** argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }
