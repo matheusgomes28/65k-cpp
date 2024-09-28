@@ -236,7 +236,7 @@ std::optional<InstructionConfig> push_accumulator_to_stack(emulator::Cpu& cpu, s
     // TODO : according to Masswerk, we don't set any flags
 
     std::uint16_t const mem_loc = static_cast<std::uint16_t>(0x0100) + static_cast<std::uint16_t>(cpu.reg.sp);
-    cpu.mem[mem_loc] = cpu.reg.a;
+    cpu.mem[mem_loc]            = cpu.reg.a;
     --cpu.reg.sp;
 
     return std::make_optional<InstructionConfig>(1, 0);
@@ -248,11 +248,48 @@ std::optional<InstructionConfig> push_status_reg_to_stack(emulator::Cpu& cpu, st
     // TODO : according to Masswerk, we don't set any flags
 
     std::uint16_t const mem_loc = static_cast<std::uint16_t>(0x0100) + static_cast<std::uint16_t>(cpu.reg.sp);
-    
+
     // I need to set the b flag to 1, andf 5th bit to 1
     std::uint8_t const val = cpu.sr() | 0b0011'0000;
-    cpu.mem[mem_loc] = val;
+    cpu.mem[mem_loc]       = val;
     --cpu.reg.sp;
+
+    return std::make_optional<InstructionConfig>(1, 0);
+}
+
+std::optional<InstructionConfig> pull_stack_to_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    // TODO : can we detect stack overflows?
+    // TODO : according to Masswerk, we don't set any flags
+
+    std::uint16_t const mem_loc =
+        static_cast<std::uint16_t>(0x0100) + static_cast<std::uint16_t>((cpu.reg.sp + 1) & 0b1111'1111);
+    std::uint8_t const val = cpu.mem[mem_loc];
+
+    cpu.flags.n = static_cast<bool>(val & 0b1000'0000);
+    cpu.flags.c = val == 0;
+    cpu.reg.a   = val;
+    return std::make_optional<InstructionConfig>(1, 0);
+}
+
+std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    // TODO : can we detect stack overflows?
+    // TODO : according to Masswerk, we don't set any flags
+
+    // TODO : Abstract these two lines into function/macro to get
+    // TODO : the top of the stack pointer
+    std::uint16_t const mem_loc =
+        static_cast<std::uint16_t>(0x0100) + static_cast<std::uint16_t>((cpu.reg.sp + 1) & 0b1111'1111);
+    std::uint8_t const val = cpu.mem[mem_loc];
+
+    cpu.flags.n = static_cast<bool>(val & 0b1000'0000);
+    cpu.flags.v = static_cast<bool>(val & 0b0100'0000);
+    cpu.flags.b = static_cast<bool>(val & 0b0001'0000);
+    cpu.flags.d = static_cast<bool>(val & 0b0000'1000);
+    cpu.flags.i = static_cast<bool>(val & 0b0000'0100);
+    cpu.flags.z = static_cast<bool>(val & 0b0000'0010);
+    cpu.flags.c = static_cast<bool>(val & 0b0000'0001);
 
     return std::make_optional<InstructionConfig>(1, 0);
 }
@@ -1179,6 +1216,8 @@ std::array<Instruction, 256> get_instructions()
     // Stack-related opcodes
     supported_instructions[0x48] = push_accumulator_to_stack;
     supported_instructions[0x08] = push_status_reg_to_stack;
+    supported_instructions[0x68] = pull_stack_to_accumulator;
+    supported_instructions[0x28] = pull_stack_to_status_reg;
 
     // Flag setting opcodes
     supported_instructions[0x38] = set_flag(&emulator::Flags::c);
