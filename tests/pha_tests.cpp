@@ -54,9 +54,3 @@ TEST(PHATests, PushedOverflow)
     ASSERT_EQ(cpu.mem[0x0100], 0x42);
     ASSERT_EQ(cpu.mem[0x01ff], 0x42);
 }
-
-int main(int argc, char** argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

@@ -10,7 +10,8 @@ function(create_tests cpp_file_name)
   target_link_libraries(${cpp_file_name}
   PRIVATE
     emulator
-    gtest::gtest)
+    gtest::gtest
+    gtest::gtest_main)
 
   add_test(NAME ${cpp_file_name} COMMAND ${cpp_file_name})
   gtest_discover_tests(${cpp_file_name})

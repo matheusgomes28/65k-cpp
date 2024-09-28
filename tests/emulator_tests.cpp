@@ -164,9 +164,3 @@ TEST(EmulatorTests, EmulateCpxSetCarry)
         ASSERT_EQ(cpu.flags.c, 0);
     }
 }
-
-int main(int argc, char** argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

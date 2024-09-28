@@ -217,7 +217,7 @@ TEST(IncrementTests, INXZeroFlag)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x01);
 
     ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
@@ -235,7 +235,7 @@ TEST(IncrementTests, INYZeroFlag)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x01);
 
     ASSERT_EQ(cpu.flags, make_flags(0b0000'0010));
@@ -253,7 +253,7 @@ TEST(IncrementTests, INCZeropageZeroFlag)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x02);
 
     ASSERT_EQ(cpu.mem[0x0a], 0x00);
@@ -273,7 +273,7 @@ TEST(IncrementTests, INCZeropagePluxXZeroFlag)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x0a);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x02);
 
     ASSERT_EQ(cpu.mem[0x0a], 0x00);
@@ -297,7 +297,7 @@ TEST(IncrementTests, INCAbsoluteZeroFlag)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x00);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x03);
 
     ASSERT_EQ(cpu.mem[pos], 0x00);
@@ -322,7 +322,7 @@ TEST(IncrementTests, INCAbsolutePluxXZeroFlag)
     ASSERT_EQ(cpu.reg.a, 0x00);
     ASSERT_EQ(cpu.reg.x, 0x0a);
     ASSERT_EQ(cpu.reg.y, 0x00);
-    ASSERT_EQ(cpu.reg.sp, 0x00);
+    ASSERT_EQ(cpu.reg.sp, 0xff);
     ASSERT_EQ(cpu.reg.pc, 0x03);
 
     ASSERT_EQ(cpu.mem[0x0a], 0x00);
@@ -547,10 +547,4 @@ TEST(IncrementTests, INCAbsolutePluxXNegativeFlag)
         ASSERT_EQ(cpu.mem[pos], init_v + 1);
         ASSERT_EQ(cpu.flags, make_flags(0b1000'0000));
     }
-}
-
-int main(int argc, char** argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }
