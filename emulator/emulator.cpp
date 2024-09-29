@@ -261,13 +261,12 @@ std::optional<InstructionConfig> pull_stack_to_accumulator(emulator::Cpu& cpu, s
 {
     // TODO : can we detect stack overflows?
     // TODO : according to Masswerk, we don't set any flags
-
-    std::uint16_t const mem_loc =
-        static_cast<std::uint16_t>(0x0100) + static_cast<std::uint16_t>((cpu.reg.sp + 1) & 0b1111'1111);
-    std::uint8_t const val = cpu.mem[mem_loc];
+    cpu.reg.sp++;
+    std::uint16_t const mem_loc = static_cast<std::uint16_t>(0x0100 + cpu.reg.sp);
+    std::uint8_t const val      = cpu.mem[mem_loc];
 
     cpu.flags.n = static_cast<bool>(val & 0b1000'0000);
-    cpu.flags.c = val == 0;
+    cpu.flags.z = val == 0;
     cpu.reg.a   = val;
     return std::make_optional<InstructionConfig>(1, 0);
 }
@@ -279,9 +278,9 @@ std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, st
 
     // TODO : Abstract these two lines into function/macro to get
     // TODO : the top of the stack pointer
-    std::uint16_t const mem_loc =
-        static_cast<std::uint16_t>(0x0100) + static_cast<std::uint16_t>((cpu.reg.sp + 1) & 0b1111'1111);
-    std::uint8_t const val = cpu.mem[mem_loc];
+    cpu.reg.sp++;
+    std::uint16_t const mem_loc = static_cast<std::uint16_t>(0x0100 + cpu.reg.sp);
+    std::uint8_t const val      = cpu.mem[mem_loc];
 
     cpu.flags.n = static_cast<bool>(val & 0b1000'0000);
     cpu.flags.v = static_cast<bool>(val & 0b0100'0000);
