@@ -280,7 +280,7 @@ std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, st
     // TODO : the top of the stack pointer
     cpu.reg.sp++;
     std::uint16_t const mem_loc = static_cast<std::uint16_t>(0x0100 + cpu.reg.sp);
-    std::uint8_t const val = cpu.mem[mem_loc];
+    std::uint8_t const val      = cpu.mem[mem_loc];
 
     cpu.flags.n = static_cast<bool>(val & 0b1000'0000);
     cpu.flags.v = static_cast<bool>(val & 0b0100'0000);
