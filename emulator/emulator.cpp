@@ -169,7 +169,6 @@ using Instruction = std::function<std::optional<InstructionConfig>(emulator::Cpu
     Addressing helpers - zeropage + reg, indexed indirect, indirect indexed helpers
 */
 
-
 /// @brief this function aids getting the indexed zeropage address
 /// from the given argument to the opcode
 /// @param cpu is the cpu object to operate on
@@ -293,6 +292,84 @@ std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, st
     return std::make_optional<InstructionConfig>(1, 0);
 }
 /* End of Stack Related Functions */
+
+/* Bit rotation functions */
+void ror_operation(emulator::Cpu& cpu, std::uint8_t value)
+{
+    std::uint8_t const new_value = (value >> 1) | (static_cast<std::uint8_t>(cpu.flags.c) << 7);
+    cpu.reg.a                        = new_value;
+    cpu.flags.c                  = value & (0b0000'0001);
+}
+
+std::optional<InstructionConfig> ror_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    ror_operation(cpu, cpu.reg.a);
+    return std::make_optional<InstructionConfig>(1);
+}
+
+std::optional<InstructionConfig> ror_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+    auto const zp    = program[cpu.reg.pc + 1];
+    auto const value = cpu.mem[zp];
+    ror_operation(cpu, value);
+    return std::make_optional<InstructionConfig>(2);
+}
+
+std::optional<InstructionConfig> ror_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const zp    = program[cpu.reg.pc + 1];
+    auto const pos   = zeropage_indexed(cpu, zp, &emulator::Registers::x);
+    auto const value = cpu.mem[pos];
+
+    ror_operation(cpu, value);
+    return std::make_optional<InstructionConfig>(2);
+}
+
+std::optional<InstructionConfig> ror_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const lsb   = program[cpu.reg.pc + 1];
+    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const value = cpu.mem[(hsb << 8) | lsb];
+
+    ror_operation(cpu, value);
+    return std::make_optional<InstructionConfig>(3);
+}
+
+std::optional<InstructionConfig> ror_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const lsb   = program[cpu.reg.pc + 1];
+    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const pos   = absolute_indexed(cpu, lsb, hsb, &emulator::Registers::x);
+    auto const value = cpu.mem[pos];
+
+    ror_operation(cpu, value);
+    return std::make_optional<InstructionConfig>(3);
+}
+/* End bit rotation functions */
 
 /* Flag setting opcodes */
 Instruction set_flag(bool emulator::Flags::*f)
@@ -1211,6 +1288,13 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x59] = eor_acc_absolute_plus_reg(&emulator::Registers::y);
     supported_instructions[0x41] = eor_acc_indexed_indirect;
     supported_instructions[0x51] = eor_acc_indirect_indexed;
+
+    // ROR opcodes
+    supported_instructions[0x6a] = ror_accumulator;
+    supported_instructions[0x66] = ror_zeropage;
+    supported_instructions[0x76] = ror_zeropage_indexed;
+    supported_instructions[0x6e] = ror_absolute;
+    supported_instructions[0x7e] = ror_absolute_indexed;
 
     // Stack-related opcodes
     supported_instructions[0x48] = push_accumulator_to_stack;
