@@ -228,5 +228,13 @@
             "configurePreset": "unix-rel-shared",
             "configuration": "Release"
         }
+    ],
+    "testPresets": [
+        {
+            "name": "unix-deb-ninja",
+            "configurePreset": "unix-deb-ninja",
+            "output": {"outputOnFailure": true},
+            "execution": {"noTestsAction": "error", "stopOnFailure": true}
+        }
     ]
 }

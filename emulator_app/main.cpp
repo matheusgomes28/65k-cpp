@@ -2,7 +2,6 @@ import emulator;
 
 #include <chrono>
 #include <cstdint>
-#include <format>
 #include <fstream>
 #include <future>
 #include <iostream>
@@ -10,6 +9,7 @@ import emulator;
 #include <vector>
 
 #include <raylib.h>
+#include <fmt/format.h>
 
 namespace
 {
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
     emulator::Cpu easy65k;
 
-    std::cout << std::format("The clock speed was set to {}\n", easy65k.clock_speed);
+    std::cout << fmt::format("The clock speed was set to {}\n", easy65k.clock_speed);
 
     auto const filename = argv[1];
     auto file           = std::ifstream{filename};
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
 
     for (auto const& [function, profile] : easy65k.current_profile())
     {
-        std::cout << std::format("{}: {:.6f}\n", function, profile);
+        std::cout << fmt::format("{}: {:.6f}\n", function, profile);
     }
 
     draw(easy65k);
