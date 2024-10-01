@@ -3,9 +3,9 @@ module;
 #include <chrono>
 #include <concepts>
 #include <iostream>
+#include <memory>
 #include <source_location>
 #include <string>
-#include <unordered_map>
 
 export module profiler;
 

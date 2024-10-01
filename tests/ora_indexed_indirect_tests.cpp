@@ -27,11 +27,11 @@ TEST(ORAIndexedIndirectTests, ZeroAddressToLastAddress)
     // which will store the two last accessible bytes
 
     emulator::Cpu cpu;
-    cpu.reg.a = 0b0101'0101;
-    cpu.reg.x = 0x00;
+    cpu.reg.a       = 0b0101'0101;
+    cpu.reg.x       = 0x00;
     cpu.mem[0xffff] = 0b0010'1010;
-    cpu.mem[0x00] = 0xff;
-    cpu.mem[0x01] = 0xff;
+    cpu.mem[0x00]   = 0xff;
+    cpu.mem[0x01]   = 0xff;
 
     std::array<std::uint8_t, 2> const program{0x01, 0x00};
 
@@ -57,11 +57,11 @@ TEST(ORAIndexedIndirectTests, ZeropageWrapsAround)
     // on the indirect address
 
     emulator::Cpu cpu;
-    cpu.reg.a = 0b0101'0101;
-    cpu.reg.x = 0x01;
+    cpu.reg.a       = 0b0101'0101;
+    cpu.reg.x       = 0x01;
     cpu.mem[0xffff] = 0b0010'1010;
-    cpu.mem[0xff] = 0xff;
-    cpu.mem[0x00] = 0xff;
+    cpu.mem[0xff]   = 0xff;
+    cpu.mem[0x00]   = 0xff;
 
     std::array<std::uint8_t, 2> const program{0x01, 0xfe};
 

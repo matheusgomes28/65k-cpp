@@ -37,10 +37,10 @@ TEST(EORZeropageTests, NoFlagOperations)
     for (auto const& [init_acc, value, address] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = init_acc;
+        cpu.reg.a                                   = init_acc;
         cpu.mem[static_cast<std::uint8_t>(address)] = value;
 
-        // TODO : The other zero page tests are probably taking 
+        // TODO : The other zero page tests are probably taking
         // TODO : 3 instructions instead of two
         std::array<std::uint8_t, 2> program{
             0x45,
@@ -74,7 +74,7 @@ TEST(EORZeropageTests, NegativeFlagOperation)
     for (auto const& [acc, value, address] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = acc;
+        cpu.reg.a                                   = acc;
         cpu.mem[static_cast<std::uint8_t>(address)] = value;
 
         std::array<std::uint8_t, 2> program{
@@ -111,7 +111,7 @@ TEST(EORZeropageTests, ZeroFlagOperation)
     for (auto const& [init_acc, value, zp_addr] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = init_acc;
+        cpu.reg.a     = init_acc;
         cpu.mem[0x88] = value;
 
         std::array<std::uint8_t, 2> program{

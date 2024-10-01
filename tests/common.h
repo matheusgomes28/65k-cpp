@@ -8,7 +8,8 @@
 ///        format `0bNVB1DIZC`
 /// @param flags an 8-bit bitset representing the flag
 /// @return the equivalent `Flags` object
-constexpr emulator::Flags make_flags(std::bitset<8> flags)
+// constexpr emulator::Flags make_flags(std::bitset<8> flags)
+inline emulator::Flags make_flags(std::bitset<8> flags)
 {
     // CZID B1VN
     return emulator::Flags{

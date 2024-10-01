@@ -27,11 +27,11 @@ TEST(ANDIndexedIndirectTests, ZeroAddressToLastAddress)
     // which will store the two last accessible bytes
 
     emulator::Cpu cpu;
-    cpu.reg.a = 0b0111'1111;
-    cpu.reg.x = 0x00;
+    cpu.reg.a       = 0b0111'1111;
+    cpu.reg.x       = 0x00;
     cpu.mem[0xffff] = 0b0111'1111;
-    cpu.mem[0x00] = 0xff;
-    cpu.mem[0x01] = 0xff;
+    cpu.mem[0x00]   = 0xff;
+    cpu.mem[0x01]   = 0xff;
 
     std::array<std::uint8_t, 2> const program{0x21, 0x00};
 
@@ -57,11 +57,11 @@ TEST(ANDIndexedIndirectTests, ZeropageWrapsAround)
     // on the indirect address
 
     emulator::Cpu cpu;
-    cpu.reg.a = 0b0111'1111;
-    cpu.reg.x = 0x01;
+    cpu.reg.a       = 0b0111'1111;
+    cpu.reg.x       = 0x01;
     cpu.mem[0xffff] = 0b0111'1111;
-    cpu.mem[0xff] = 0xff;
-    cpu.mem[0x00] = 0xff;
+    cpu.mem[0xff]   = 0xff;
+    cpu.mem[0x00]   = 0xff;
 
     std::array<std::uint8_t, 2> const program{0x21, 0xfe};
 

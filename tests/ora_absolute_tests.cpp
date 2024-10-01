@@ -32,7 +32,7 @@ TEST(ORAAbsoluteTests, GeneralTests)
     for (auto const& [init_acc, value, address] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = init_acc;
+        cpu.reg.a        = init_acc;
         cpu.mem[address] = value;
 
         auto const hsb = static_cast<std::uint8_t>((address >> 8) & 0b1111'11111);

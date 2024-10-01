@@ -34,8 +34,8 @@ TEST(ORAAbsoluteTests, PlusXTests)
     for (auto const& [init_acc, value, init_x, address, exp_mem] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = init_acc;
-        cpu.reg.x = init_x;
+        cpu.reg.a        = init_acc;
+        cpu.reg.x        = init_x;
         cpu.mem[exp_mem] = value;
 
         auto const hsb = static_cast<std::uint8_t>((address >> 8) & 0b1111'11111);
@@ -70,8 +70,8 @@ TEST(ORAAbsoluteTests, PlusYTests)
     for (auto const& [init_acc, value, init_y, address, exp_mem] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = init_acc;
-        cpu.reg.y = init_y;
+        cpu.reg.a        = init_acc;
+        cpu.reg.y        = init_y;
         cpu.mem[exp_mem] = value;
 
         auto const hsb = static_cast<std::uint8_t>((address >> 8) & 0b1111'1111);
