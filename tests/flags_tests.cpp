@@ -22,7 +22,7 @@ TEST(FlagsTests, SEC)
 
     ASSERT_FALSE(cpu.flags.c);
     emulator::execute(cpu, {program.data(), program.size()});
-    ASSERT_TRUE (cpu.flags.c);
+    ASSERT_TRUE(cpu.flags.c);
 
     ASSERT_EQ(0b0000'0001, cpu.sr());
 }
@@ -35,7 +35,7 @@ TEST(FlagsTests, SED)
 
     ASSERT_FALSE(cpu.flags.d);
     emulator::execute(cpu, {program.data(), program.size()});
-    ASSERT_TRUE (cpu.flags.d);
+    ASSERT_TRUE(cpu.flags.d);
 
     ASSERT_EQ(0b0000'1000, cpu.sr());
 }
@@ -48,7 +48,7 @@ TEST(FlagsTests, SEI)
 
     ASSERT_FALSE(cpu.flags.i);
     emulator::execute(cpu, {program.data(), program.size()});
-    ASSERT_TRUE (cpu.flags.i);
+    ASSERT_TRUE(cpu.flags.i);
 
     ASSERT_EQ(0b0000'0100, cpu.sr());
 }
@@ -61,7 +61,7 @@ TEST(FlagsTests, SRGetsNegative)
 
     ASSERT_FALSE(cpu.flags.n);
     emulator::execute(cpu, {program.data(), program.size()});
-    ASSERT_TRUE (cpu.flags.n);
+    ASSERT_TRUE(cpu.flags.n);
 
     ASSERT_EQ(0b1000'0000, cpu.sr());
 }

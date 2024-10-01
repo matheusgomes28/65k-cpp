@@ -36,8 +36,8 @@ TEST(ORAZeropageIndexTests, WrapAroundTests)
     for (auto const& [init_acc, value, address, init_x, exp_mem] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = init_acc;
-        cpu.reg.x = init_x;
+        cpu.reg.a        = init_acc;
+        cpu.reg.x        = init_x;
         cpu.mem[exp_mem] = value;
 
         std::array<std::uint8_t, 2> program{

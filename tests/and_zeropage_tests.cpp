@@ -36,7 +36,7 @@ TEST(ANDZeropageTests, NoFlagOperations)
     for (auto const& [init_acc, value, address] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = init_acc;
+        cpu.reg.a                                   = init_acc;
         cpu.mem[static_cast<std::uint8_t>(address)] = value;
 
         std::array<std::uint8_t, 3> program{
@@ -73,7 +73,7 @@ TEST(ANDZeropageTests, NegativeFlagOperation)
     for (auto const& [acc, value, address] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = acc;
+        cpu.reg.a                                   = acc;
         cpu.mem[static_cast<std::uint8_t>(address)] = value;
 
         std::array<std::uint8_t, 2> program{
@@ -106,7 +106,7 @@ TEST(ANDZeropageTests, ZeroFlagOperation)
     for (auto const& [init_acc, value, zp_addr] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = init_acc;
+        cpu.reg.a     = init_acc;
         cpu.mem[0x88] = value;
 
         std::array<std::uint8_t, 2> program{

@@ -36,7 +36,7 @@ TEST(ORAZeropageTests, NoFlagOperations)
     for (auto const& [init_acc, value, address] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = init_acc;
+        cpu.reg.a                                   = init_acc;
         cpu.mem[static_cast<std::uint8_t>(address)] = value;
 
         std::array<std::uint8_t, 3> program{
@@ -73,7 +73,7 @@ TEST(ORAZeropageTests, NegativeFlagOperation)
     for (auto const& [acc, value, address] : test_cases)
     {
         emulator::Cpu cpu;
-        cpu.reg.a = acc;
+        cpu.reg.a                                   = acc;
         cpu.mem[static_cast<std::uint8_t>(address)] = value;
 
         std::array<std::uint8_t, 2> program{
@@ -98,7 +98,7 @@ TEST(ORAZeropageTests, NegativeFlagOperation)
 TEST(ORAZeropageTests, ZeroFlagOperation)
 {
     emulator::Cpu cpu;
-    cpu.reg.a = 0x00;
+    cpu.reg.a     = 0x00;
     cpu.mem[0x88] = 0x00;
 
     std::array<std::uint8_t, 2> program{
@@ -129,7 +129,7 @@ TEST(ORAZeropageTests, MakeSureFlagsAreSound)
         for (std::int16_t val = 0; val < 256; ++val)
         {
             emulator::Cpu cpu;
-            cpu.reg.a = static_cast<std::uint8_t>(acc);
+            cpu.reg.a     = static_cast<std::uint8_t>(acc);
             cpu.mem[0x88] = static_cast<std::uint8_t>(val);
 
             std::array<std::uint8_t, 2> program{

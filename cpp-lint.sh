@@ -7,7 +7,7 @@ set -euo pipefail
 '
 
 THIS_DIR=$(cd "$(dirname "$0")" && pwd)
-PROJECT_DIR="$(cd "${THIS_DIR}/.." && pwd)"
+PROJECT_DIR="$(cd "${THIS_DIR}/" && pwd)"
 
 # Create the exclude regex by replacing spaces
 # with the | (for or), and wrap the text in regex

@@ -27,11 +27,11 @@ TEST(ORAIndirectIndexedTests, ZeroAddressToLastAddress)
     // complement of the or operation
 
     emulator::Cpu cpu;
-    cpu.reg.a = 0b0101'0101;
-    cpu.reg.y = 0x01;
+    cpu.reg.a       = 0b0101'0101;
+    cpu.reg.y       = 0x01;
     cpu.mem[0xffff] = 0b0010'1010;
-    cpu.mem[0x00] = 0xfe;
-    cpu.mem[0x01] = 0xff;
+    cpu.mem[0x00]   = 0xfe;
+    cpu.mem[0x01]   = 0xff;
 
     std::array<std::uint8_t, 2> const program{0x11, 0x00};
 
@@ -59,11 +59,11 @@ TEST(ORAIndirectIndexedTests, ZeropageWrapsAround)
     // the or operation
 
     emulator::Cpu cpu;
-    cpu.reg.a = 0b0101'0101;
-    cpu.reg.y = 0x01;
+    cpu.reg.a       = 0b0101'0101;
+    cpu.reg.y       = 0x01;
     cpu.mem[0xffff] = 0b0010'1010;
-    cpu.mem[0xff] = 0xfe;
-    cpu.mem[0x00] = 0xff;
+    cpu.mem[0xff]   = 0xfe;
+    cpu.mem[0x00]   = 0xff;
 
     std::array<std::uint8_t, 2> const program{0x11, 0xff};
 

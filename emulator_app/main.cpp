@@ -8,8 +8,8 @@ import emulator;
 #include <thread>
 #include <vector>
 
-#include <raylib.h>
 #include <fmt/format.h>
+#include <raylib.h>
 
 namespace
 {

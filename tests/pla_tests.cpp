@@ -14,10 +14,10 @@ TEST(PLATests, PopsNoFlagsNoOverflow)
     emulator::Cpu cpu;
     ASSERT_EQ(cpu.reg.a, 0x00);
 
-    cpu.reg.sp = 0xfe;
+    cpu.reg.sp      = 0xfe;
     cpu.mem[0x01ff] = 0b0111'1111;
 
-    constexpr std::array<std::uint8_t, 256> program{ 0x68 };
+    constexpr std::array<std::uint8_t, 256> program{0x68};
     emulator::execute(cpu, {program.data(), program.size()});
 
     ASSERT_EQ(cpu.reg.sp, 0xff);
@@ -39,10 +39,10 @@ TEST(PLATests, PopsNegativeFlag)
     emulator::Cpu cpu;
     ASSERT_EQ(cpu.reg.a, 0x00);
 
-    cpu.reg.sp = 0xfe;
+    cpu.reg.sp      = 0xfe;
     cpu.mem[0x01ff] = 0b1111'1111;
 
-    constexpr std::array<std::uint8_t, 256> program{ 0x68 };
+    constexpr std::array<std::uint8_t, 256> program{0x68};
     emulator::execute(cpu, {program.data(), program.size()});
 
     ASSERT_EQ(cpu.reg.sp, 0xff);
@@ -64,10 +64,10 @@ TEST(PLATests, PopsZeroFlag)
     emulator::Cpu cpu;
     cpu.reg.a = 0xff;
 
-    cpu.reg.sp = 0xfe;
+    cpu.reg.sp      = 0xfe;
     cpu.mem[0x01ff] = 0x00;
 
-    constexpr std::array<std::uint8_t, 256> program{ 0x68 };
+    constexpr std::array<std::uint8_t, 256> program{0x68};
     emulator::execute(cpu, {program.data(), program.size()});
 
     ASSERT_EQ(cpu.reg.sp, 0xff);
@@ -89,10 +89,10 @@ TEST(PLATests, PopsOverflow)
     emulator::Cpu cpu;
     ASSERT_EQ(cpu.reg.a, 0x00);
 
-    cpu.reg.sp = 0xff;
+    cpu.reg.sp      = 0xff;
     cpu.mem[0x0100] = 0b0111'1111;
 
-    constexpr std::array<std::uint8_t, 256> program{ 0x68 };
+    constexpr std::array<std::uint8_t, 256> program{0x68};
     emulator::execute(cpu, {program.data(), program.size()});
 
     ASSERT_EQ(cpu.reg.sp, 0x00);
