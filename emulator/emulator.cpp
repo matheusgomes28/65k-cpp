@@ -297,7 +297,7 @@ std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, st
 void ror_operation(emulator::Cpu& cpu, std::uint8_t value)
 {
     std::uint8_t const new_value = (value >> 1) | (static_cast<std::uint8_t>(cpu.flags.c) << 7);
-    cpu.reg.a                        = new_value;
+    cpu.reg.a                    = new_value;
     cpu.flags.c                  = value & (0b0000'0001);
 }
 
