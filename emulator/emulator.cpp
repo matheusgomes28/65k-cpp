@@ -303,6 +303,15 @@ std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, st
     return new_value;
 }
 
+[[nodiscard]] std::uint8_t rol_operation(emulator::Cpu& cpu, std::uint8_t value)
+{
+    std::uint8_t const new_value = (value << 1) | (static_cast<std::uint8_t>(cpu.flags.c));
+    cpu.flags.n                  = new_value & 0b1000'0000;
+    cpu.flags.z                  = new_value == 0;
+    cpu.flags.c                  = value & (0b1000'0000);
+    return new_value;
+}
+
 std::optional<InstructionConfig> ror_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
@@ -319,7 +328,7 @@ std::optional<InstructionConfig> ror_zeropage(emulator::Cpu& cpu, std::span<cons
     }
     auto const zp    = program[cpu.reg.pc + 1];
     auto const value = cpu.mem[zp];
-    cpu.mem[zp] = ror_operation(cpu, value);
+    cpu.mem[zp]      = ror_operation(cpu, value);
     return std::make_optional<InstructionConfig>(2);
 }
 
@@ -349,9 +358,9 @@ std::optional<InstructionConfig> ror_absolute(emulator::Cpu& cpu, std::span<cons
 
     auto const lsb   = program[cpu.reg.pc + 1];
     auto const hsb   = program[cpu.reg.pc + 2];
-    auto const pos = (hsb << 8) | lsb;
+    auto const pos   = (hsb << 8) | lsb;
     auto const value = cpu.mem[pos];
-    cpu.mem[pos] = ror_operation(cpu, value);
+    cpu.mem[pos]     = ror_operation(cpu, value);
     return std::make_optional<InstructionConfig>(3);
 }
 
@@ -369,6 +378,75 @@ std::optional<InstructionConfig> ror_absolute_indexed(emulator::Cpu& cpu, std::s
     auto const value = cpu.mem[pos];
 
     cpu.mem[pos] = ror_operation(cpu, value);
+    return std::make_optional<InstructionConfig>(3);
+}
+
+std::optional<InstructionConfig> rol_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    cpu.reg.a = rol_operation(cpu, cpu.reg.a);
+    return std::make_optional<InstructionConfig>(1);
+}
+
+std::optional<InstructionConfig> rol_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+    auto const zp    = program[cpu.reg.pc + 1];
+    auto const value = cpu.mem[zp];
+    cpu.mem[zp]      = rol_operation(cpu, value);
+    return std::make_optional<InstructionConfig>(2);
+}
+
+std::optional<InstructionConfig> rol_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const zp    = program[cpu.reg.pc + 1];
+    auto const pos   = zeropage_indexed(cpu, zp, &emulator::Registers::x);
+    auto const value = cpu.mem[pos];
+
+    cpu.mem[pos] = rol_operation(cpu, value);
+    return std::make_optional<InstructionConfig>(2);
+}
+
+std::optional<InstructionConfig> rol_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const lsb   = program[cpu.reg.pc + 1];
+    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const pos   = (hsb << 8) | lsb;
+    auto const value = cpu.mem[pos];
+    cpu.mem[pos]     = rol_operation(cpu, value);
+    return std::make_optional<InstructionConfig>(3);
+}
+
+std::optional<InstructionConfig> rol_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const lsb   = program[cpu.reg.pc + 1];
+    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const pos   = absolute_indexed(cpu, lsb, hsb, &emulator::Registers::x);
+    auto const value = cpu.mem[pos];
+
+    cpu.mem[pos] = rol_operation(cpu, value);
     return std::make_optional<InstructionConfig>(3);
 }
 /* End bit rotation functions */
@@ -1297,6 +1375,13 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x76] = ror_zeropage_indexed;
     supported_instructions[0x6e] = ror_absolute;
     supported_instructions[0x7e] = ror_absolute_indexed;
+
+    // ROL opcodes
+    supported_instructions[0x2a] = rol_accumulator;
+    supported_instructions[0x26] = rol_zeropage;
+    supported_instructions[0x36] = rol_zeropage_indexed;
+    supported_instructions[0x2e] = rol_absolute;
+    supported_instructions[0x3e] = rol_absolute_indexed;
 
     // Stack-related opcodes
     supported_instructions[0x48] = push_accumulator_to_stack;
