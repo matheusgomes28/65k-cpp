@@ -463,6 +463,18 @@ Instruction set_flag(bool emulator::Flags::*f)
 }
 /* End of flag setting opcodes */
 
+/* Flag clearning operation */
+Instruction clear_flag(bool emulator::Flags::*f)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
+    {
+        ENABLE_PROFILER(cpu);
+        (cpu.flags).*f = false;
+        return std::make_optional<InstructionConfig>(1);
+    };
+}
+/* End of flag clearning operations */
+
 Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
@@ -1393,6 +1405,12 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x38] = set_flag(&emulator::Flags::c);
     supported_instructions[0x78] = set_flag(&emulator::Flags::i);
     supported_instructions[0xf8] = set_flag(&emulator::Flags::d);
+
+    // Flag clearing opcodes
+    supported_instructions[0x18] = clear_flag(&emulator::Flags::c);
+    supported_instructions[0x58] = clear_flag(&emulator::Flags::i);
+    supported_instructions[0xb8] = clear_flag(&emulator::Flags::v);
+    supported_instructions[0xd8] = clear_flag(&emulator::Flags::d);
 
     return supported_instructions;
 }

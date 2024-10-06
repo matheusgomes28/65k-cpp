@@ -1,8 +1,5 @@
-/// This file contains tests for the flags registers. More
-/// specifically, we will test that the opcodes 0x38 (SEC),
-/// 0xf8 (SED), and 0x78 (SEI) set the flags they are
-/// supposed to, and that the "cpu.sr()" function returns the
-/// correct state of the flags
+// This file contains the tests for opcodes
+// setting and clearning flags
 
 import emulator;
 
@@ -93,4 +90,80 @@ TEST(FlagsTests, SRGetsBreak)
     emulator::Cpu cpu;
     cpu.flags.b = true;
     ASSERT_EQ(cpu.sr(), 0b0001'0000);
+}
+
+// NOLINTNEXTLINE
+TEST(FlagsTests, CLC)
+{
+    emulator::Cpu cpu;
+    constexpr std::array<std::uint8_t, 1> program{0x18};
+
+    cpu.flags.n = true;
+    cpu.flags.v = true;
+    cpu.flags.b = true;
+    cpu.flags.d = true;
+    cpu.flags.i = true;
+    cpu.flags.z = true;
+    cpu.flags.c = true;
+
+    emulator::execute(cpu, {program.data(), program.size()});
+    ASSERT_FALSE(cpu.flags.c);
+    ASSERT_EQ(0b1101'1110, cpu.sr());
+}
+
+// NOLINTNEXTLINE
+TEST(FlagsTests, CLD)
+{
+    emulator::Cpu cpu;
+    constexpr std::array<std::uint8_t, 1> program{0xd8};
+
+    cpu.flags.n = true;
+    cpu.flags.v = true;
+    cpu.flags.b = true;
+    cpu.flags.d = true;
+    cpu.flags.i = true;
+    cpu.flags.z = true;
+    cpu.flags.c = true;
+
+    emulator::execute(cpu, {program.data(), program.size()});
+    ASSERT_FALSE(cpu.flags.d);
+    ASSERT_EQ(0b1101'0111, cpu.sr());
+}
+
+// NOLINTNEXTLINE
+TEST(FlagsTests, CLI)
+{
+    emulator::Cpu cpu;
+    constexpr std::array<std::uint8_t, 1> program{0x58};
+
+    cpu.flags.n = true;
+    cpu.flags.v = true;
+    cpu.flags.b = true;
+    cpu.flags.d = true;
+    cpu.flags.i = true;
+    cpu.flags.z = true;
+    cpu.flags.c = true;
+
+    emulator::execute(cpu, {program.data(), program.size()});
+    ASSERT_FALSE(cpu.flags.i);
+    ASSERT_EQ(0b1101'1011, cpu.sr());
+}
+
+// NOLINTNEXTLINE
+TEST(FlagsTests, CLV)
+{
+    emulator::Cpu cpu;
+    constexpr std::array<std::uint8_t, 1> program{0xb8};
+
+    cpu.flags.n = true;
+    cpu.flags.v = true;
+    cpu.flags.b = true;
+    cpu.flags.d = true;
+    cpu.flags.i = true;
+    cpu.flags.z = true;
+    cpu.flags.c = true;
+
+    emulator::execute(cpu, {program.data(), program.size()});
+    ASSERT_FALSE(cpu.flags.v);
+    ASSERT_EQ(0b1001'1111, cpu.sr());
 }
