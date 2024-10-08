@@ -16,12 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mattgomes28/jammy-cpp:0.0.0
+      options: --user 1001
 
     steps:
     - uses: actions/checkout@v4
 
     - name: Run clang format
-      run: ./cpp-lint.sh
+      run: |
+        git ls-files "*.cpp" > format-files
+        git ls-files "*.hpp" > format-files
+        git ls-files "*.h" > format-files
+        clang-format -Werror --dry-run --files=format-files
 
     - name: Configure CMake
       run: cmake . --preset "unix-deb-ninja"
