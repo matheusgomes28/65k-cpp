@@ -23,9 +23,9 @@ jobs:
 
     - name: Run clang format
       run: |
-        git ls-files "*.cpp" > format-files
-        git ls-files "*.hpp" > format-files
-        git ls-files "*.h" > format-files
+        git ls-files "*.cpp" >> format-files
+        git ls-files "*.hpp" >> format-files
+        git ls-files "*.h" >> format-files
         clang-format -Werror --dry-run --files=format-files
 
     - name: Configure CMake
