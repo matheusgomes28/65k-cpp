@@ -1432,7 +1432,10 @@ std::array<Instruction, 256> get_instructions()
     // are functions that will raise an error
 
     // Supported instructions
+
+    // TODO : BRK is wrongly implemented
     supported_instructions[0x00] = [](emulator::Cpu&, std::span<const std::uint8_t>) { return std::nullopt; };
+
     supported_instructions[0x8a] = transfer_regs(&emulator::Registers::x, &emulator::Registers::a);
     supported_instructions[0x98] = transfer_regs(&emulator::Registers::y, &emulator::Registers::a);
     supported_instructions[0xa8] = transfer_regs(&emulator::Registers::a, &emulator::Registers::y);
@@ -1447,17 +1450,19 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x95] = st_zeropage_indexed(&emulator::Registers::a, &emulator::Registers::x);
     supported_instructions[0x99] = sta_absolute_indexed(&emulator::Registers::y);
     supported_instructions[0x9d] = sta_absolute_indexed(&emulator::Registers::x);
+    // supported_instructions[0x81] = sta_absolute_indexed(&emulator::Registers::x);
 
     // STX Instructions
     supported_instructions[0x86] = st_zeropage(&emulator::Registers::x);
     supported_instructions[0x8e] = st_absolute(&emulator::Registers::x);
     supported_instructions[0x96] = st_zeropage_indexed(&emulator::Registers::x, &emulator::Registers::y);
 
-    // STY Isntructions
+    // STY opcodes
     supported_instructions[0x84] = st_zeropage(&emulator::Registers::y);
     supported_instructions[0x8c] = st_absolute(&emulator::Registers::y);
     supported_instructions[0x94] = st_zeropage_indexed(&emulator::Registers::y, &emulator::Registers::x);
 
+    // LDA opcodes
     supported_instructions[0xa9] = ld_immediate(&emulator::Registers::a);
     supported_instructions[0xa5] = ld_zeropage(&emulator::Registers::a);
     supported_instructions[0xb5] = ld_zeropage_indexed(&emulator::Registers::a, &emulator::Registers::x);
@@ -1466,11 +1471,15 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0xa1] = ld_index_indirect(&emulator::Registers::a, &emulator::Registers::x);
     supported_instructions[0xb1] = ld_indirect_index(&emulator::Registers::a);
     supported_instructions[0xad] = ld_absolute(&emulator::Registers::a);
+
+    // LDX opcodes
     supported_instructions[0xa2] = ld_immediate(&emulator::Registers::x);
     supported_instructions[0xa6] = ld_zeropage(&emulator::Registers::x);
     supported_instructions[0xb6] = ld_zeropage_indexed(&emulator::Registers::x, &emulator::Registers::y);
     supported_instructions[0xae] = ld_absolute(&emulator::Registers::x);
     supported_instructions[0xbe] = ld_absolute_plus_reg(&emulator::Registers::x, &emulator::Registers::y);
+
+    // LDY opcodes
     supported_instructions[0xa0] = ld_immediate(&emulator::Registers::y);
     supported_instructions[0xa4] = ld_zeropage(&emulator::Registers::y);
     supported_instructions[0xb4] = ld_zeropage_indexed(&emulator::Registers::y, &emulator::Registers::x);
