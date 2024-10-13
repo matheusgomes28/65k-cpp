@@ -1027,6 +1027,19 @@ Instruction st_absolute(std::uint8_t emulator::Registers::*from)
     };
 }
 
+std::optional<InstructionConfig> sta_index_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const pos = indexed_indirect(cpu, program[cpu.reg.pc + 1]);
+    cpu.mem[pos]   = cpu.reg.a;
+    return std::make_optional<InstructionConfig>(2, 6);
+}
+
 // Compare instructions here
 
 /// Compares whichever register was given to the immediate
@@ -1450,7 +1463,7 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x95] = st_zeropage_indexed(&emulator::Registers::a, &emulator::Registers::x);
     supported_instructions[0x99] = sta_absolute_indexed(&emulator::Registers::y);
     supported_instructions[0x9d] = sta_absolute_indexed(&emulator::Registers::x);
-    // supported_instructions[0x81] = sta_absolute_indexed(&emulator::Registers::x);
+    supported_instructions[0x81] = sta_index_indirect;
 
     // STX Instructions
     supported_instructions[0x86] = st_zeropage(&emulator::Registers::x);

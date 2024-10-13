@@ -41,6 +41,9 @@ through 6504 applications, showing state of flags, registers, and memory:
 This section contains support tables for each operation. The tickbox in the
 `supported` column indicates whether or not the operation is isupported.
 
++ :white_check_mark: means opcode support and tests are available.
++ :ok: means opcode support is available, but tests needs writing.
++ :x: means there's no opcode support or tests.
 
 ### AND - And Memory with Accumulator
 
@@ -145,10 +148,10 @@ Total number of `LDY` instructions: `5`.
 | STA        | Zero Page           | 0x85             | 2         | 3          | :white_check_mark: |
 | STA        | Zero Page, X        | 0x95             | 2         | 4          | :white_check_mark: |
 | STA        | Absolute            | 0x8D             | 3         | 4          | :white_check_mark: |
-| STA        | Absolute, X         | 0x9D             | 3         | 4*         | :white_check_mark: |
-| STA        | Absolute, Y         | 0x99             | 3         | 4*         | :white_check_mark: |
-| STA        | (Indirect, X)       | 0x81             | 2         | 6          | :x:                |
-| STA        | (Indirect), Y       | 0x91             | 2         | 5*         | :white_check_mark: |
+| STA        | Absolute, X         | 0x9D             | 3         | 5          | :white_check_mark: |
+| STA        | Absolute, Y         | 0x99             | 3         | 5          | :white_check_mark: |
+| STA        | (Indirect, X)       | 0x81             | 2         | 6          | :white_check_mark: |
+| STA        | (Indirect), Y       | 0x91             | 2         | 6          | :white_check_mark: |
 
 Total number of `STA` instructions: `7`.
 
