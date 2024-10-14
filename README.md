@@ -204,9 +204,9 @@ Total number of stack instructions: `4`.
 | **Opcode** | **Addressing Mode** | **Opcode (Hex)** | **Bytes** | **Cycles** | **Supported**      |
 |------------|---------------------|------------------|-----------|------------|--------------------|
 | DEC        | Zero Page           | 0xC6             | 2         | 5          | :white_check_mark: |
-| DEC        | Zero Page, X        | 0xD6             | 2         | 6          | :x:                |
-| DEC        | Absolute            | 0xCE             | 3         | 6          | :x:                |
-| DEC        | Absolute, X         | 0xDE             | 3         | 7          | :x:                |
+| DEC        | Zero Page, X        | 0xD6             | 2         | 6          | :ok:               |
+| DEC        | Absolute            | 0xCE             | 3         | 6          | :ok:               |
+| DEC        | Absolute, X         | 0xDE             | 3         | 7          | :ok:               |
 | DEX        | Implied             | 0xCA             | 1         | 2          | :white_check_mark: |
 | DEY        | Implied             | 0x88             | 1         | 2          | :white_check_mark: |
 | INC        | Zero Page           | 0xE6             | 2         | 5          | :white_check_mark: |

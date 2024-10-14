@@ -863,6 +863,14 @@ std::optional<InstructionConfig> inc_absolute_plus_x(emulator::Cpu& cpu, std::sp
     return std::make_optional<InstructionConfig>(3, 7);
 }
 
+/* Decrement operations */
+void decrement_operation(emulator::Cpu& cpu, std::uint16_t pos)
+{
+    cpu.mem[pos]--;
+    cpu.flags.z = cpu.mem[pos] == 0;
+    cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
+}
+
 std::optional<InstructionConfig> dec_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
@@ -872,12 +880,52 @@ std::optional<InstructionConfig> dec_zeropage(emulator::Cpu& cpu, std::span<cons
     }
 
     std::uint8_t const pos = program[cpu.reg.pc + 1];
-    cpu.mem[pos]--;
-    cpu.flags.z = cpu.mem[pos] == 0;
-    cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
-
-    return std::make_optional<InstructionConfig>(2);
+    decrement_operation(cpu, pos);
+    return std::make_optional<InstructionConfig>(2, 5);
 }
+
+std::optional<InstructionConfig> dec_zp_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
+    decrement_operation(cpu, pos);
+    return std::make_optional<InstructionConfig>(2, 5);
+}
+
+std::optional<InstructionConfig> dec_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    // (hsb << 8) + lsb convert little endian to the address
+    auto const lsb = program[cpu.reg.pc + 1];
+    auto const hsb = program[cpu.reg.pc + 2];
+    decrement_operation(cpu, (hsb << 8) | lsb);
+    return std::make_optional<InstructionConfig>(3, 6);
+}
+
+std::optional<InstructionConfig> dec_abs_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    // (hsb << 8) + lsb convert little endian to the address
+    auto const pos = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], &emulator::Registers::x);
+    decrement_operation(cpu, pos);
+    return std::make_optional<InstructionConfig>(3, 7);
+}
+/* End Decrement operations */
 
 Instruction inc_reg(std::uint8_t emulator::Registers::*reg)
 {
@@ -1525,7 +1573,12 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0xc8] = inc_reg(&emulator::Registers::y);
     supported_instructions[0xe8] = inc_reg(&emulator::Registers::x);
 
+    // DEC opcodes
     supported_instructions[0xc6] = dec_zeropage;
+    supported_instructions[0xd6] = dec_zp_indexed;
+    supported_instructions[0xce] = dec_abs;
+    supported_instructions[0xde] = dec_abs_indexed;
+
     supported_instructions[0x88] = dec_reg(&emulator::Registers::y);
     supported_instructions[0xca] = dec_reg(&emulator::Registers::x);
 
