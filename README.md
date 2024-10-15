@@ -302,12 +302,12 @@ Total number of `ROL` instructions: `5`.
 |------------|---------------------|------------------|-----------|------------|--------------------|
 | CMP        | Immediate           | 0xC9             | 2         | 2          | :white_check_mark: |
 | CMP        | Zero Page           | 0xC5             | 2         | 3          | :white_check_mark: |
-| CMP        | Zero Page, X        | 0xD5             | 2         | 4          | :x:                |
-| CMP        | Absolute            | 0xCD             | 3         | 4          | :x:                |
-| CMP        | Absolute, X         | 0xDD             | 3         | 4*         | :x:                |
-| CMP        | Absolute, Y         | 0xD9             | 3         | 4*         | :x:                |
-| CMP        | (Indirect, X)       | 0xC1             | 2         | 6          | :x:                |
-| CMP        | (Indirect), Y       | 0xD1             | 2         | 5*         | :x:                |
+| CMP        | Zero Page, X        | 0xD5             | 2         | 4          | :ok:               |
+| CMP        | Absolute            | 0xCD             | 3         | 4          | :ok:               |
+| CMP        | Absolute, X         | 0xDD             | 3         | 4*         | :ok:               |
+| CMP        | Absolute, Y         | 0xD9             | 3         | 4*         | :ok:               |
+| CMP        | (Indirect, X)       | 0xC1             | 2         | 6          | :ok:               |
+| CMP        | (Indirect), Y       | 0xD1             | 2         | 5*         | :ok:               |
 
 Total number of `CMP` instructions: `8`.
 
@@ -317,7 +317,7 @@ Total number of `CMP` instructions: `8`.
 |------------|---------------------|------------------|-----------|------------|--------------------|
 | CPX        | Immediate           | 0xE0             | 2         | 2          | :white_check_mark: |
 | CPX        | Zero Page           | 0xE4             | 2         | 3          | :white_check_mark: |
-| CPX        | Absolute            | 0xEC             | 3         | 4          | :x:                |
+| CPX        | Absolute            | 0xEC             | 3         | 4          | :ok:               |
 
 Total number of `CPX` instructions: `3`.
 
@@ -327,7 +327,7 @@ Total number of `CPX` instructions: `3`.
 |------------|---------------------|------------------|-----------|------------|--------------------|
 | CPY        | Immediate           | 0xC0             | 2         | 2          | :white_check_mark: |
 | CPY        | Zero Page           | 0xC4             | 2         | 3          | :white_check_mark: |
-| CPY        | Absolute            | 0xCC             | 3         | 4          | :x:                |
+| CPY        | Absolute            | 0xCC             | 3         | 4          | :ok:               |
 
 Total number of `CPY` instructions: `3`.
 
