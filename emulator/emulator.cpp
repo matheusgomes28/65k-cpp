@@ -1089,6 +1089,14 @@ std::optional<InstructionConfig> sta_index_indirect(emulator::Cpu& cpu, std::spa
 }
 
 // Compare instructions here
+void cmp_operation(emulator::Cpu& cpu, std::uint8_t emulator::Registers::*reg, std::uint8_t val)
+{
+    auto const comparison = (cpu.reg).*reg - val;
+    cpu.flags.n           = comparison & 0b1000'0000; // Negative flag
+    cpu.flags.z           = comparison == 0; // Negative flag
+    cpu.flags.c           = (cpu.reg).*reg >= val;
+}
+
 
 /// Compares whichever register was given to the immediate
 /// value in the next address in the program array
@@ -1102,12 +1110,7 @@ Instruction cmp_immediate_reg(std::uint8_t emulator::Registers::*reg)
             return std::nullopt;
         }
 
-        auto const value      = program[cpu.reg.pc + 1];
-        auto const comparison = (cpu.reg).*reg - value;
-        cpu.flags.n           = comparison & 0b1000'0000; // Negative flag
-        cpu.flags.z           = comparison == 0; // Negative flag
-        cpu.flags.c           = (cpu.reg).*reg >= value;
-
+        cmp_operation(cpu, reg, program[cpu.reg.pc + 1]);
         return std::make_optional<InstructionConfig>(2);
     };
 }
@@ -1123,15 +1126,89 @@ Instruction cmp_zeropage_reg(std::uint8_t emulator::Registers::*reg)
             return std::nullopt;
         }
 
-        auto const memory     = program[cpu.reg.pc + 1];
-        auto const value      = cpu.mem[memory];
-        auto const comparison = (cpu.reg).*reg - value;
-        cpu.flags.n           = comparison & 0b1000'0000; // Negative flag
-        cpu.flags.z           = comparison == 0; // Negative flag
-        cpu.flags.n           = (cpu.reg).*reg >= value;
-
+        auto const memory = program[cpu.reg.pc + 1];
+        cmp_operation(cpu, reg, cpu.mem[memory]);
         return std::make_optional<InstructionConfig>(2);
     };
+}
+
+std::optional<InstructionConfig> cmp_zp_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const pos = zeropage_indexed(cpu, cpu.mem[cpu.reg.pc + 1], &emulator::Registers::x);
+    cmp_operation(cpu, &emulator::Registers::a, cpu.mem[pos]);
+    return std::make_optional<InstructionConfig>(2, 4);
+}
+
+Instruction cmp_absolute(std::uint8_t emulator::Registers::*reg)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
+    {
+        ENABLE_PROFILER(cpu);
+        if ((cpu.reg.pc + 2) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+        // (hsb << 8) + lsb convert little endian to the address
+        auto const lsb    = program[cpu.reg.pc + 1];
+        auto const hsb    = program[cpu.reg.pc + 2];
+        auto const addr   = static_cast<std::uint16_t>((hsb << 8) | lsb);
+        auto const memory = program[addr];
+
+        cmp_operation(cpu, reg, cpu.mem[memory]);
+        return std::make_optional<InstructionConfig>(3, 4);
+    };
+}
+
+Instruction cmp_abs_indexed(std::uint8_t emulator::Registers::*index)
+{
+    return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
+    {
+        ENABLE_PROFILER(cpu);
+        if ((cpu.reg.pc + 2) >= program.size())
+        {
+            return std::nullopt;
+        }
+
+        auto const pos = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], index);
+        cmp_operation(cpu, &emulator::Registers::a, cpu.mem[pos]);
+
+        // TODO : Cycle add should reflect the boundary checks
+        std::size_t const cycle_add = 0;
+        return std::make_optional<InstructionConfig>(3, 4 + cycle_add);
+    };
+}
+
+std::optional<InstructionConfig> cmp_indexed_indirect(emulator::Cpu& cpu, std::span<std::uint8_t const> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const pos = indexed_indirect(cpu, cpu.mem[cpu.reg.pc + 1]);
+    cmp_operation(cpu, &emulator::Registers::a, cpu.mem[pos]);
+    return std::make_optional<InstructionConfig>(2, 6);
+}
+
+std::optional<InstructionConfig> cmp_indirect_indexed(emulator::Cpu& cpu, std::span<std::uint8_t const> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const pos = indirect_indexed(cpu, cpu.mem[cpu.reg.pc + 1]);
+    cmp_operation(cpu, &emulator::Registers::a, cpu.mem[pos]);
+    return std::make_optional<InstructionConfig>(2, 6);
 }
 
 // Branching functions here
@@ -1547,15 +1624,21 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0xbc] = ld_absolute_plus_reg(&emulator::Registers::y, &emulator::Registers::x);
     supported_instructions[0xac] = ld_absolute(&emulator::Registers::y);
 
-    // This is the immediate mode compares to registers
+    // CMP, CPX, CPY opcodes
     supported_instructions[0xc9] = cmp_immediate_reg(&emulator::Registers::a); // TODO : test
     supported_instructions[0xc0] = cmp_immediate_reg(&emulator::Registers::y);
     supported_instructions[0xe0] = cmp_immediate_reg(&emulator::Registers::x);
-
-    // TODO : support for compare zeropage simple
     supported_instructions[0xc5] = cmp_zeropage_reg(&emulator::Registers::a);
     supported_instructions[0xe4] = cmp_zeropage_reg(&emulator::Registers::x); // TODO : test
     supported_instructions[0xc4] = cmp_zeropage_reg(&emulator::Registers::y); // TODO : test
+    supported_instructions[0xcd] = cmp_absolute(&emulator::Registers::a);
+    supported_instructions[0xec] = cmp_absolute(&emulator::Registers::x);
+    supported_instructions[0xcc] = cmp_absolute(&emulator::Registers::y);
+    supported_instructions[0xd5] = cmp_zp_indexed;
+    supported_instructions[0xdd] = cmp_abs_indexed(&emulator::Registers::x);
+    supported_instructions[0xd9] = cmp_abs_indexed(&emulator::Registers::y);
+    supported_instructions[0xc1] = cmp_indexed_indirect;
+    supported_instructions[0xd1] = cmp_indirect_indexed;
 
     supported_instructions[0xf0] = branch_flag_value<true>(&emulator::Flags::z);
     supported_instructions[0xd0] = branch_flag_value<false>(&emulator::Flags::z);
@@ -1689,7 +1772,6 @@ std::optional<InstructionConfig> execute_next(
 
 export namespace emulator
 {
-
     std::size_t execute(Cpu& cpu, std::span<const std::uint8_t> program)
     {
         std::size_t n_cycles = 0;
