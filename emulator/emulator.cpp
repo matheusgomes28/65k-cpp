@@ -1111,7 +1111,7 @@ Instruction cmp_immediate_reg(std::uint8_t emulator::Registers::*reg)
         }
 
         cmp_operation(cpu, reg, program[cpu.reg.pc + 1]);
-        return std::make_optional<InstructionConfig>(2);
+        return std::make_optional<InstructionConfig>(2, 2);
     };
 }
 
@@ -1128,7 +1128,7 @@ Instruction cmp_zeropage_reg(std::uint8_t emulator::Registers::*reg)
 
         auto const memory = program[cpu.reg.pc + 1];
         cmp_operation(cpu, reg, cpu.mem[memory]);
-        return std::make_optional<InstructionConfig>(2);
+        return std::make_optional<InstructionConfig>(2, 3);
     };
 }
 
@@ -1140,7 +1140,7 @@ std::optional<InstructionConfig> cmp_zp_indexed(emulator::Cpu& cpu, std::span<co
         return std::nullopt;
     }
 
-    auto const pos = zeropage_indexed(cpu, cpu.mem[cpu.reg.pc + 1], &emulator::Registers::x);
+    auto const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
     cmp_operation(cpu, &emulator::Registers::a, cpu.mem[pos]);
     return std::make_optional<InstructionConfig>(2, 4);
 }
@@ -1156,12 +1156,11 @@ Instruction cmp_absolute(std::uint8_t emulator::Registers::*reg)
         }
 
         // (hsb << 8) + lsb convert little endian to the address
-        auto const lsb    = program[cpu.reg.pc + 1];
-        auto const hsb    = program[cpu.reg.pc + 2];
-        auto const addr   = static_cast<std::uint16_t>((hsb << 8) | lsb);
-        auto const memory = program[addr];
+        auto const lsb  = program[cpu.reg.pc + 1];
+        auto const hsb  = program[cpu.reg.pc + 2];
+        auto const addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
 
-        cmp_operation(cpu, reg, cpu.mem[memory]);
+        cmp_operation(cpu, reg, cpu.mem[addr]);
         return std::make_optional<InstructionConfig>(3, 4);
     };
 }
@@ -1193,7 +1192,7 @@ std::optional<InstructionConfig> cmp_indexed_indirect(emulator::Cpu& cpu, std::s
         return std::nullopt;
     }
 
-    auto const pos = indexed_indirect(cpu, cpu.mem[cpu.reg.pc + 1]);
+    auto const pos = indexed_indirect(cpu, program[cpu.reg.pc + 1]);
     cmp_operation(cpu, &emulator::Registers::a, cpu.mem[pos]);
     return std::make_optional<InstructionConfig>(2, 6);
 }
@@ -1206,9 +1205,11 @@ std::optional<InstructionConfig> cmp_indirect_indexed(emulator::Cpu& cpu, std::s
         return std::nullopt;
     }
 
-    auto const pos = indirect_indexed(cpu, cpu.mem[cpu.reg.pc + 1]);
+    auto const pos = indirect_indexed(cpu, program[cpu.reg.pc + 1]);
     cmp_operation(cpu, &emulator::Registers::a, cpu.mem[pos]);
-    return std::make_optional<InstructionConfig>(2, 6);
+    // TODO : Cycle add should reflect the boundary checks
+    std::size_t const cycle_add = 0;
+    return std::make_optional<InstructionConfig>(2, 5 + cycle_add);
 }
 
 // Branching functions here
