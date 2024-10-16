@@ -302,12 +302,12 @@ Total number of `ROL` instructions: `5`.
 |------------|---------------------|------------------|-----------|------------|--------------------|
 | CMP        | Immediate           | 0xC9             | 2         | 2          | :white_check_mark: |
 | CMP        | Zero Page           | 0xC5             | 2         | 3          | :white_check_mark: |
-| CMP        | Zero Page, X        | 0xD5             | 2         | 4          | :ok:               |
-| CMP        | Absolute            | 0xCD             | 3         | 4          | :ok:               |
-| CMP        | Absolute, X         | 0xDD             | 3         | 4*         | :ok:               |
-| CMP        | Absolute, Y         | 0xD9             | 3         | 4*         | :ok:               |
-| CMP        | (Indirect, X)       | 0xC1             | 2         | 6          | :ok:               |
-| CMP        | (Indirect), Y       | 0xD1             | 2         | 5*         | :ok:               |
+| CMP        | Zero Page, X        | 0xD5             | 2         | 4          | :white_check_mark: |
+| CMP        | Absolute            | 0xCD             | 3         | 4          | :white_check_mark: |
+| CMP        | Absolute, X         | 0xDD             | 3         | 4*         | :white_check_mark: |
+| CMP        | Absolute, Y         | 0xD9             | 3         | 4*         | :white_check_mark: |
+| CMP        | (Indirect, X)       | 0xC1             | 2         | 6          | :white_check_mark: |
+| CMP        | (Indirect), Y       | 0xD1             | 2         | 5*         | :white_check_mark: |
 
 Total number of `CMP` instructions: `8`.
 
