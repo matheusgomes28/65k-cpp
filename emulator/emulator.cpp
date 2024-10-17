@@ -228,6 +228,13 @@ inline std::uint16_t indirect_indexed(emulator::Cpu& cpu, std::uint8_t val)
     return addr;
 }
 
+/* Functions with no context */
+std::optional<InstructionConfig> nop(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    return std::make_optional<InstructionConfig>(1, 2);
+}
+/* End functions with no context */
+
 /* Stack Related Functions */
 std::optional<InstructionConfig> push_accumulator_to_stack(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
@@ -1097,7 +1104,6 @@ void cmp_operation(emulator::Cpu& cpu, std::uint8_t emulator::Registers::*reg, s
     cpu.flags.c           = (cpu.reg).*reg >= val;
 }
 
-
 /// Compares whichever register was given to the immediate
 /// value in the next address in the program array
 Instruction cmp_immediate_reg(std::uint8_t emulator::Registers::*reg)
@@ -1740,6 +1746,9 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x58] = clear_flag(&emulator::Flags::i);
     supported_instructions[0xb8] = clear_flag(&emulator::Flags::v);
     supported_instructions[0xd8] = clear_flag(&emulator::Flags::d);
+
+    // Opcodes with no context
+    supported_instructions[0xea] = nop;
 
     return supported_instructions;
 }
