@@ -311,23 +311,23 @@ Total number of `ROL` instructions: `5`.
 
 Total number of `CMP` instructions: `8`.
 
-### CPX - Compare Memory with Accumulator
+### CPX - Compare Memory with X Register
 
 | **Opcode** | **Addressing Mode** | **Opcode (Hex)** | **Bytes** | **Cycles** | **Supported**      |
 |------------|---------------------|------------------|-----------|------------|--------------------|
 | CPX        | Immediate           | 0xE0             | 2         | 2          | :white_check_mark: |
 | CPX        | Zero Page           | 0xE4             | 2         | 3          | :white_check_mark: |
-| CPX        | Absolute            | 0xEC             | 3         | 4          | :ok:               |
+| CPX        | Absolute            | 0xEC             | 3         | 4          | :white_check_mark: |
 
 Total number of `CPX` instructions: `3`.
 
-### CPY - Compare Memory with Accumulator
+### CPY - Compare Memory with Y Register
 
 | **Opcode** | **Addressing Mode** | **Opcode (Hex)** | **Bytes** | **Cycles** | **Supported**      |
 |------------|---------------------|------------------|-----------|------------|--------------------|
 | CPY        | Immediate           | 0xC0             | 2         | 2          | :white_check_mark: |
 | CPY        | Zero Page           | 0xC4             | 2         | 3          | :white_check_mark: |
-| CPY        | Absolute            | 0xCC             | 3         | 4          | :ok:               |
+| CPY        | Absolute            | 0xCC             | 3         | 4          | :white_check_mark: |
 
 Total number of `CPY` instructions: `3`.
 
@@ -386,7 +386,7 @@ total number of interrupt instructions: `2`.
 |------------|---------------------|------------------|-----------|------------|--------------------|
 | BIT        | Zeropage            | 0x24             | 2         | 3          | :x:                |
 | BIT        | Absolute            | 0x2c             | 3         | 4          | :x:                |
-| NOP        | Implied             | 0xEA             | 1         | 2          | :x:                |
+| NOP        | Implied             | 0xEA             | 1         | 2          | :white_check_mark: |
 
 total number of random instructions: `2`.
 
