@@ -384,8 +384,8 @@ total number of interrupt instructions: `2`.
 
 | **Opcode** | **Addressing Mode** | **Opcode (Hex)** | **Bytes** | **Cycles** | **Supported**      |
 |------------|---------------------|------------------|-----------|------------|--------------------|
-| BIT        | Zeropage            | 0x24             | 2         | 3          | :x:                |
-| BIT        | Absolute            | 0x2c             | 3         | 4          | :x:                |
+| BIT        | Zeropage            | 0x24             | 2         | 3          | :ok:               |
+| BIT        | Absolute            | 0x2c             | 3         | 4          | :ok:               |
 | NOP        | Implied             | 0xEA             | 1         | 2          | :white_check_mark: |
 
 total number of random instructions: `2`.

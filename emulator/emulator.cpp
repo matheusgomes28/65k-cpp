@@ -233,6 +233,42 @@ std::optional<InstructionConfig> nop(emulator::Cpu& cpu, std::span<const std::ui
 {
     return std::make_optional<InstructionConfig>(1, 2);
 }
+
+void bit_operation(emulator::Cpu& cpu, std::uint8_t value)
+{
+    cpu.flags.n = static_cast<bool>(value | 0b1000'0000);
+    cpu.flags.z = static_cast<bool>(value | 0b0100'0000);
+    cpu.flags.c = cpu.reg.a & value;
+}
+
+std::optional<InstructionConfig> bit_zp(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 1) >= program.size())
+    {
+        return std::nullopt;
+    }
+    auto const zp    = program[cpu.reg.pc + 1];
+    auto const value = cpu.mem[zp];
+    bit_operation(cpu, value);
+    return std::make_optional<InstructionConfig>(2, 3);
+}
+
+std::optional<InstructionConfig> bit_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const lsb   = program[cpu.reg.pc + 1];
+    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const pos   = (hsb << 8) | lsb;
+    auto const value = cpu.mem[pos];
+    bit_operation(cpu, value);
+    return std::make_optional<InstructionConfig>(3, 4);
+}
 /* End functions with no context */
 
 /* Stack Related Functions */
@@ -1749,6 +1785,8 @@ std::array<Instruction, 256> get_instructions()
 
     // Opcodes with no context
     supported_instructions[0xea] = nop;
+    supported_instructions[0x24] = bit_zp;
+    supported_instructions[0x2c] = bit_abs;
 
     return supported_instructions;
 }
