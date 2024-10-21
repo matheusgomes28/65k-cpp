@@ -236,9 +236,9 @@ std::optional<InstructionConfig> nop(emulator::Cpu& cpu, std::span<const std::ui
 
 void bit_operation(emulator::Cpu& cpu, std::uint8_t value)
 {
-    cpu.flags.n = static_cast<bool>(value | 0b1000'0000);
-    cpu.flags.z = static_cast<bool>(value | 0b0100'0000);
-    cpu.flags.c = cpu.reg.a & value;
+    cpu.flags.n = static_cast<bool>(value & 0b1000'0000);
+    cpu.flags.v = static_cast<bool>(value & 0b0100'0000);
+    cpu.flags.z = !static_cast<bool>(cpu.reg.a & value);
 }
 
 std::optional<InstructionConfig> bit_zp(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
