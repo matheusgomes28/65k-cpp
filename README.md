@@ -364,8 +364,8 @@ Total number of branching instructions: `8`.
 
 | **Opcode** | **Addressing Mode** | **Opcode (Hex)** | **Bytes** | **Cycles** | **Supported**      |
 |------------|---------------------|------------------|-----------|------------|--------------------|
-| JMP        | Absolute            | 0x4C             | 3         | 3          | :x:                |
-| JMP        | Indirect            | 0x6C             | 3         | 5          | :x:                |
+| JMP        | Absolute            | 0x4C             | 3         | 3          | :white_check_mark: |
+| JMP        | Indirect            | 0x6C             | 3         | 5          | :ok:               |
 | JSR        | Absolute            | 0x20             | 3         | 6          | :x:                |
 | RTS        | Absolute            | 0x60             | 1         | 6          | :x:                |
 

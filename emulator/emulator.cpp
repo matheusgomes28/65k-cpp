@@ -196,6 +196,21 @@ inline std::uint16_t absolute_indexed(
     return static_cast<std::uint16_t>(target_address & 0xffff);
 }
 
+/// @brief This function aids with the fetching of an indirect
+/// address.
+/// @param cpu the cpu with the memory to operate on
+/// @param val the 16-bit address that contains the memory to
+/// fetch
+/// @return the 16-bit address result of the indirect fetch
+inline std::uint16_t indirect(emulator::Cpu& cpu, std::uint16_t val)
+{
+    auto const lsb     = cpu.mem[val];
+    auto const hsb_pos = static_cast<std::uint16_t>((val + 1) & 0xff);
+    auto const hsb     = cpu.mem[hsb_pos];
+    auto const addr    = static_cast<std::uint16_t>((hsb << 8) | lsb);
+    return addr;
+}
+
 /// @brief This function aids with the fetching of an indexed indirect
 /// opcode mode.
 /// @param cpu the cpu with the memory to operate on
@@ -203,15 +218,10 @@ inline std::uint16_t absolute_indexed(
 /// @return the target address
 inline std::uint16_t indexed_indirect(emulator::Cpu& cpu, std::uint8_t val)
 {
-    // (hsb << 8) + lsb convert little endian to the address
+    // index first then indirect
     std::uint16_t const indexed_address = static_cast<std::uint16_t>(val + cpu.reg.x);
     std::uint16_t const zp_addr         = static_cast<std::uint16_t>(indexed_address & 0xff);
-
-    auto const lsb     = cpu.mem[zp_addr];
-    auto const hsb_pos = static_cast<std::uint16_t>((zp_addr + 1) & 0xff);
-    auto const hsb     = cpu.mem[hsb_pos];
-    auto const addr    = static_cast<std::uint16_t>((hsb << 8) | lsb);
-    return addr;
+    return indirect(cpu, zp_addr);
 }
 
 /// @brief This function aids with the fetching of an indirect indexed
@@ -221,11 +231,9 @@ inline std::uint16_t indexed_indirect(emulator::Cpu& cpu, std::uint8_t val)
 /// @return the target address
 inline std::uint16_t indirect_indexed(emulator::Cpu& cpu, std::uint8_t val)
 {
-    auto const lsb      = cpu.mem[static_cast<std::uint8_t>(val)];
-    auto const hsb_addr = static_cast<std::uint16_t>((val + 1) & 0xff);
-    auto const hsb      = cpu.mem[hsb_addr];
-    auto const addr     = static_cast<std::uint16_t>(((hsb << 8) | lsb) + cpu.reg.y);
-    return addr;
+    // indirect first then index
+    auto const addr = indirect(cpu, val);
+    return static_cast<std::uint16_t>(addr + cpu.reg.y);
 }
 
 /* Functions with no context */
@@ -1254,6 +1262,39 @@ std::optional<InstructionConfig> cmp_indirect_indexed(emulator::Cpu& cpu, std::s
     return std::make_optional<InstructionConfig>(2, 5 + cycle_add);
 }
 
+/* Begin jump instructions */
+std::optional<InstructionConfig> jmp_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const lsb  = program[cpu.reg.pc + 1];
+    auto const hsb  = program[cpu.reg.pc + 2];
+    auto const addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
+    cpu.reg.pc      = addr;
+    return std::make_optional<InstructionConfig>(0, 3);
+}
+
+std::optional<InstructionConfig> jmp_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+    if ((cpu.reg.pc + 2) >= program.size())
+    {
+        return std::nullopt;
+    }
+
+    auto const lsb           = program[cpu.reg.pc + 1];
+    auto const hsb           = program[cpu.reg.pc + 2];
+    auto const addr          = static_cast<std::uint16_t>((hsb << 8) | lsb);
+    auto const indirect_addr = indirect(cpu, addr);
+    cpu.reg.pc               = indirect_addr;
+    return std::make_optional<InstructionConfig>(0, 5);
+}
+/* End jump instructions */
+
 // Branching functions here
 std::optional<InstructionConfig> bne(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
@@ -1683,6 +1724,11 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0xc1] = cmp_indexed_indirect;
     supported_instructions[0xd1] = cmp_indirect_indexed;
 
+    // Jump opcodes
+    supported_instructions[0x4c] = jmp_abs;
+    supported_instructions[0x6c] = jmp_indirect;
+
+    // Branching opcodes
     supported_instructions[0xf0] = branch_flag_value<true>(&emulator::Flags::z);
     supported_instructions[0xd0] = branch_flag_value<false>(&emulator::Flags::z);
     supported_instructions[0x30] = branch_flag_value<true>(&emulator::Flags::n);
@@ -1692,6 +1738,7 @@ std::array<Instruction, 256> get_instructions()
     supported_instructions[0x70] = branch_flag_value<true>(&emulator::Flags::v);
     supported_instructions[0x50] = branch_flag_value<false>(&emulator::Flags::v);
 
+    // INC opcodes
     supported_instructions[0xe6] = inc_zeropage;
     supported_instructions[0xf6] = inc_zeropage_plus_x;
     supported_instructions[0xee] = inc_absolute;
