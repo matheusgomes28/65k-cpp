@@ -21,7 +21,7 @@ TEST(BITTests, ZeropageNegativeFlag)
     EXPECT_EQ(cpu.reg.x, 0x00);
     EXPECT_EQ(cpu.reg.y, 0x00);
     EXPECT_EQ(cpu.reg.sp, 0xff);
-    EXPECT_EQ(cpu.reg.pc, 0x02);
+    EXPECT_EQ(cpu.reg.pc, 0x8002);
     EXPECT_EQ(cpu.flags, make_flags(0b1000'0000));
 }
 
@@ -39,7 +39,7 @@ TEST(BITTests, ZeropageOverflowFlag)
     EXPECT_EQ(cpu.reg.x, 0x00);
     EXPECT_EQ(cpu.reg.y, 0x00);
     EXPECT_EQ(cpu.reg.sp, 0xff);
-    EXPECT_EQ(cpu.reg.pc, 0x02);
+    EXPECT_EQ(cpu.reg.pc, 0x8002);
     EXPECT_EQ(cpu.flags, make_flags(0b0100'0000));
 }
 
@@ -56,7 +56,7 @@ TEST(BITTests, ZeropageZeroFlag)
     EXPECT_EQ(cpu.reg.x, 0x00);
     EXPECT_EQ(cpu.reg.y, 0x00);
     EXPECT_EQ(cpu.reg.sp, 0xff);
-    EXPECT_EQ(cpu.reg.pc, 0x02);
+    EXPECT_EQ(cpu.reg.pc, 0x8002);
     EXPECT_EQ(cpu.flags, make_flags(0b0000'0010));
 }
 
@@ -74,7 +74,7 @@ TEST(BITTests, AbsoluteNegativeFlag)
     EXPECT_EQ(cpu.reg.x, 0x00);
     EXPECT_EQ(cpu.reg.y, 0x00);
     EXPECT_EQ(cpu.reg.sp, 0xff);
-    EXPECT_EQ(cpu.reg.pc, 0x03);
+    EXPECT_EQ(cpu.reg.pc, 0x8003);
     EXPECT_EQ(cpu.flags, make_flags(0b1000'0000));
 }
 
@@ -92,7 +92,7 @@ TEST(BITTests, AbsoluteOverflowFlag)
     EXPECT_EQ(cpu.reg.x, 0x00);
     EXPECT_EQ(cpu.reg.y, 0x00);
     EXPECT_EQ(cpu.reg.sp, 0xff);
-    EXPECT_EQ(cpu.reg.pc, 0x03);
+    EXPECT_EQ(cpu.reg.pc, 0x8003);
     EXPECT_EQ(cpu.flags, make_flags(0b0100'0000));
 }
 
@@ -109,6 +109,6 @@ TEST(BITTests, AbsoluteZeroFlag)
     EXPECT_EQ(cpu.reg.x, 0x00);
     EXPECT_EQ(cpu.reg.y, 0x00);
     EXPECT_EQ(cpu.reg.sp, 0xff);
-    EXPECT_EQ(cpu.reg.pc, 0x03);
+    EXPECT_EQ(cpu.reg.pc, 0x8003);
     EXPECT_EQ(cpu.flags, make_flags(0b0000'0010));
 }

@@ -10,6 +10,7 @@ import profiler;
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <exception>
 #include <functional>
 #include <iostream>
@@ -56,6 +57,8 @@ struct ProfileBook
 #else
 #define ENABLE_PROFILER(cpu)
 #endif // BUILD_PROFILER
+
+std::uint16_t constexpr STARTING_ADDR = 0x8000;
 
 export namespace emulator
 {
@@ -252,11 +255,11 @@ void bit_operation(emulator::Cpu& cpu, std::uint8_t value)
 std::optional<InstructionConfig> bit_zp(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
-    auto const zp    = program[cpu.reg.pc + 1];
+    auto const zp    = cpu.mem[cpu.reg.pc + 1];
     auto const value = cpu.mem[zp];
     bit_operation(cpu, value);
     return std::make_optional<InstructionConfig>(2, 3);
@@ -265,13 +268,13 @@ std::optional<InstructionConfig> bit_zp(emulator::Cpu& cpu, std::span<const std:
 std::optional<InstructionConfig> bit_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const lsb   = program[cpu.reg.pc + 1];
-    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const lsb   = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb   = cpu.mem[cpu.reg.pc + 2];
     auto const pos   = (hsb << 8) | lsb;
     auto const value = cpu.mem[pos];
     bit_operation(cpu, value);
@@ -391,11 +394,11 @@ std::optional<InstructionConfig> ror_accumulator(emulator::Cpu& cpu, std::span<c
 std::optional<InstructionConfig> ror_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
-    auto const zp    = program[cpu.reg.pc + 1];
+    auto const zp    = cpu.mem[cpu.reg.pc + 1];
     auto const value = cpu.mem[zp];
     cpu.mem[zp]      = rotate_right_operation(cpu, value);
     return std::make_optional<InstructionConfig>(2);
@@ -404,12 +407,12 @@ std::optional<InstructionConfig> ror_zeropage(emulator::Cpu& cpu, std::span<cons
 std::optional<InstructionConfig> ror_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const zp    = program[cpu.reg.pc + 1];
+    auto const zp    = cpu.mem[cpu.reg.pc + 1];
     auto const pos   = zeropage_indexed(cpu, zp, &emulator::Registers::x);
     auto const value = cpu.mem[pos];
 
@@ -420,13 +423,13 @@ std::optional<InstructionConfig> ror_zeropage_indexed(emulator::Cpu& cpu, std::s
 std::optional<InstructionConfig> ror_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const lsb   = program[cpu.reg.pc + 1];
-    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const lsb   = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb   = cpu.mem[cpu.reg.pc + 2];
     auto const pos   = (hsb << 8) | lsb;
     auto const value = cpu.mem[pos];
     cpu.mem[pos]     = rotate_right_operation(cpu, value);
@@ -436,13 +439,13 @@ std::optional<InstructionConfig> ror_absolute(emulator::Cpu& cpu, std::span<cons
 std::optional<InstructionConfig> ror_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const lsb   = program[cpu.reg.pc + 1];
-    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const lsb   = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb   = cpu.mem[cpu.reg.pc + 2];
     auto const pos   = absolute_indexed(cpu, lsb, hsb, &emulator::Registers::x);
     auto const value = cpu.mem[pos];
 
@@ -460,11 +463,11 @@ std::optional<InstructionConfig> rol_accumulator(emulator::Cpu& cpu, std::span<c
 std::optional<InstructionConfig> rol_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
-    auto const zp    = program[cpu.reg.pc + 1];
+    auto const zp    = cpu.mem[cpu.reg.pc + 1];
     auto const value = cpu.mem[zp];
     cpu.mem[zp]      = rotate_left_operation(cpu, value);
     return std::make_optional<InstructionConfig>(2);
@@ -473,12 +476,12 @@ std::optional<InstructionConfig> rol_zeropage(emulator::Cpu& cpu, std::span<cons
 std::optional<InstructionConfig> rol_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const zp    = program[cpu.reg.pc + 1];
+    auto const zp    = cpu.mem[cpu.reg.pc + 1];
     auto const pos   = zeropage_indexed(cpu, zp, &emulator::Registers::x);
     auto const value = cpu.mem[pos];
 
@@ -489,13 +492,13 @@ std::optional<InstructionConfig> rol_zeropage_indexed(emulator::Cpu& cpu, std::s
 std::optional<InstructionConfig> rol_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const lsb   = program[cpu.reg.pc + 1];
-    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const lsb   = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb   = cpu.mem[cpu.reg.pc + 2];
     auto const pos   = (hsb << 8) | lsb;
     auto const value = cpu.mem[pos];
     cpu.mem[pos]     = rotate_left_operation(cpu, value);
@@ -505,13 +508,13 @@ std::optional<InstructionConfig> rol_absolute(emulator::Cpu& cpu, std::span<cons
 std::optional<InstructionConfig> rol_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const lsb   = program[cpu.reg.pc + 1];
-    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const lsb   = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb   = cpu.mem[cpu.reg.pc + 2];
     auto const pos   = absolute_indexed(cpu, lsb, hsb, &emulator::Registers::x);
     auto const value = cpu.mem[pos];
 
@@ -529,11 +532,11 @@ std::optional<InstructionConfig> lsr_accumulator(emulator::Cpu& cpu, std::span<c
 std::optional<InstructionConfig> lsr_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
-    auto const zp    = program[cpu.reg.pc + 1];
+    auto const zp    = cpu.mem[cpu.reg.pc + 1];
     auto const value = cpu.mem[zp];
     cpu.mem[zp]      = shift_right_operation(cpu, value);
     return std::make_optional<InstructionConfig>(2);
@@ -542,12 +545,12 @@ std::optional<InstructionConfig> lsr_zeropage(emulator::Cpu& cpu, std::span<cons
 std::optional<InstructionConfig> lsr_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const zp    = program[cpu.reg.pc + 1];
+    auto const zp    = cpu.mem[cpu.reg.pc + 1];
     auto const pos   = zeropage_indexed(cpu, zp, &emulator::Registers::x);
     auto const value = cpu.mem[pos];
 
@@ -558,13 +561,13 @@ std::optional<InstructionConfig> lsr_zeropage_indexed(emulator::Cpu& cpu, std::s
 std::optional<InstructionConfig> lsr_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const lsb   = program[cpu.reg.pc + 1];
-    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const lsb   = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb   = cpu.mem[cpu.reg.pc + 2];
     auto const pos   = (hsb << 8) | lsb;
     auto const value = cpu.mem[pos];
     cpu.mem[pos]     = shift_right_operation(cpu, value);
@@ -574,13 +577,13 @@ std::optional<InstructionConfig> lsr_absolute(emulator::Cpu& cpu, std::span<cons
 std::optional<InstructionConfig> lsr_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const lsb   = program[cpu.reg.pc + 1];
-    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const lsb   = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb   = cpu.mem[cpu.reg.pc + 2];
     auto const pos   = absolute_indexed(cpu, lsb, hsb, &emulator::Registers::x);
     auto const value = cpu.mem[pos];
 
@@ -598,11 +601,11 @@ std::optional<InstructionConfig> asl_accumulator(emulator::Cpu& cpu, std::span<c
 std::optional<InstructionConfig> asl_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
-    auto const zp    = program[cpu.reg.pc + 1];
+    auto const zp    = cpu.mem[cpu.reg.pc + 1];
     auto const value = cpu.mem[zp];
     cpu.mem[zp]      = shift_left_operation(cpu, value);
     return std::make_optional<InstructionConfig>(2);
@@ -611,12 +614,12 @@ std::optional<InstructionConfig> asl_zeropage(emulator::Cpu& cpu, std::span<cons
 std::optional<InstructionConfig> asl_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const zp    = program[cpu.reg.pc + 1];
+    auto const zp    = cpu.mem[cpu.reg.pc + 1];
     auto const pos   = zeropage_indexed(cpu, zp, &emulator::Registers::x);
     auto const value = cpu.mem[pos];
 
@@ -627,13 +630,13 @@ std::optional<InstructionConfig> asl_zeropage_indexed(emulator::Cpu& cpu, std::s
 std::optional<InstructionConfig> asl_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const lsb   = program[cpu.reg.pc + 1];
-    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const lsb   = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb   = cpu.mem[cpu.reg.pc + 2];
     auto const pos   = (hsb << 8) | lsb;
     auto const value = cpu.mem[pos];
     cpu.mem[pos]     = shift_left_operation(cpu, value);
@@ -643,13 +646,13 @@ std::optional<InstructionConfig> asl_absolute(emulator::Cpu& cpu, std::span<cons
 std::optional<InstructionConfig> asl_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const lsb   = program[cpu.reg.pc + 1];
-    auto const hsb   = program[cpu.reg.pc + 2];
+    auto const lsb   = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb   = cpu.mem[cpu.reg.pc + 2];
     auto const pos   = absolute_indexed(cpu, lsb, hsb, &emulator::Registers::x);
     auto const value = cpu.mem[pos];
 
@@ -687,11 +690,11 @@ Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 1) >= program.size())
+        if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
-        auto const value = program[cpu.reg.pc + 1];
+        auto const value = cpu.mem[cpu.reg.pc + 1];
 
         (cpu.reg).*reg = value;
         cpu.flags.z    = value == 0;
@@ -706,14 +709,14 @@ Instruction ld_zeropage(std::uint8_t emulator::Registers::*reg)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 1) >= program.size())
+        if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
         // Safe to dereference cpu.mem[pos] as pos
         // will be an std::uint8_t
-        auto const pos   = program[cpu.reg.pc + 1];
+        auto const pos   = cpu.mem[cpu.reg.pc + 1];
         auto const value = cpu.mem[pos];
         (cpu.reg).*reg   = value;
         cpu.flags.z      = value == 0;
@@ -736,13 +739,13 @@ Instruction ld_zeropage_indexed(std::uint8_t emulator::Registers::*to, std::uint
     {
         ENABLE_PROFILER(cpu);
 
-        if ((cpu.reg.pc + 1) >= program.size())
+        if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
         // TODO : Write some tests for the wrapping behaviour
-        std::uint16_t const pos  = zeropage_indexed(cpu, program[cpu.reg.pc + 1], add);
+        std::uint16_t const pos  = zeropage_indexed(cpu, cpu.mem[cpu.reg.pc + 1], add);
         std::uint8_t const value = cpu.mem[pos];
         (cpu.reg).*to            = value;
         cpu.flags.z              = value == 0;
@@ -757,14 +760,14 @@ Instruction ld_absolute(std::uint8_t emulator::Registers::*to)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 2) >= program.size())
+        if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
 
-        std::uint16_t const lsb  = program[cpu.reg.pc + 1];
-        std::uint16_t const hsb  = program[cpu.reg.pc + 2];
+        std::uint16_t const lsb  = cpu.mem[cpu.reg.pc + 1];
+        std::uint16_t const hsb  = cpu.mem[cpu.reg.pc + 2];
         std::uint16_t const pos  = (hsb << 8) | lsb;
         std::uint8_t const value = cpu.mem[pos];
 
@@ -780,13 +783,13 @@ Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::*to, std::uin
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 2) >= program.size())
+        if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
         // Do we want to put these numbers as std::uint16_t?
-        std::uint16_t const pos  = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], add);
+        std::uint16_t const pos  = absolute_indexed(cpu, cpu.mem[cpu.reg.pc + 1], cpu.mem[cpu.reg.pc + 2], add);
         std::uint8_t const value = cpu.mem[pos];
 
         (cpu.reg).*to = value;
@@ -803,13 +806,13 @@ Instruction ld_index_indirect(std::uint8_t emulator::Registers::*to, std::uint8_
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 1) >= program.size())
+        if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
         // The indirection position should wrap around the zeropage
-        std::uint16_t const zeropage  = program[cpu.reg.pc + 1];
+        std::uint16_t const zeropage  = cpu.mem[cpu.reg.pc + 1];
         std::uint16_t const pos_index = (zeropage + static_cast<std::uint16_t>((cpu.reg).*add)) & 0xff;
 
         std::uint16_t const lsb  = cpu.mem[pos_index];
@@ -829,12 +832,12 @@ Instruction ld_indirect_index(std::uint8_t emulator::Registers::*to)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 1) >= program.size())
+        if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
-        auto const pos           = indirect_indexed(cpu, program[cpu.reg.pc + 1]);
+        auto const pos           = indirect_indexed(cpu, cpu.mem[cpu.reg.pc + 1]);
         std::uint8_t const value = cpu.mem[pos];
 
         (cpu.reg).*to = value;
@@ -847,12 +850,12 @@ Instruction ld_indirect_index(std::uint8_t emulator::Registers::*to)
 std::optional<InstructionConfig> inc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    std::uint8_t const pos = program[cpu.reg.pc + 1];
+    std::uint8_t const pos = cpu.mem[cpu.reg.pc + 1];
     cpu.mem[pos]++;
     cpu.flags.z = cpu.mem[pos] == 0;
     cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
@@ -863,12 +866,12 @@ std::optional<InstructionConfig> inc_zeropage(emulator::Cpu& cpu, std::span<cons
 std::optional<InstructionConfig> inc_zeropage_plus_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    std::uint16_t const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
+    std::uint16_t const pos = zeropage_indexed(cpu, cpu.mem[cpu.reg.pc + 1], &emulator::Registers::x);
 
     cpu.mem[pos]++;
     cpu.flags.z = cpu.mem[pos] == 0;
@@ -880,13 +883,13 @@ std::optional<InstructionConfig> inc_zeropage_plus_x(emulator::Cpu& cpu, std::sp
 std::optional<InstructionConfig> inc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    std::uint8_t const lsb  = program[cpu.reg.pc + 1];
-    std::uint8_t const hsb  = program[cpu.reg.pc + 2];
+    std::uint8_t const lsb  = cpu.mem[cpu.reg.pc + 1];
+    std::uint8_t const hsb  = cpu.mem[cpu.reg.pc + 2];
     std::uint16_t const pos = (hsb << 8) | lsb;
     cpu.mem[pos]++;
     cpu.flags.z = cpu.mem[pos] == 0;
@@ -899,13 +902,13 @@ std::optional<InstructionConfig> inc_absolute_plus_x(emulator::Cpu& cpu, std::sp
 {
     ENABLE_PROFILER(cpu);
 
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
     std::uint16_t const pos =
-        absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], &emulator::Registers::x);
+        absolute_indexed(cpu, cpu.mem[cpu.reg.pc + 1], cpu.mem[cpu.reg.pc + 2], &emulator::Registers::x);
 
     cpu.mem[pos]++;
     cpu.flags.z = cpu.mem[pos] == 0;
@@ -925,12 +928,12 @@ void decrement_operation(emulator::Cpu& cpu, std::uint16_t pos)
 std::optional<InstructionConfig> dec_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    std::uint8_t const pos = program[cpu.reg.pc + 1];
+    std::uint8_t const pos = cpu.mem[cpu.reg.pc + 1];
     decrement_operation(cpu, pos);
     return std::make_optional<InstructionConfig>(2, 5);
 }
@@ -938,12 +941,12 @@ std::optional<InstructionConfig> dec_zeropage(emulator::Cpu& cpu, std::span<cons
 std::optional<InstructionConfig> dec_zp_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
+    auto const pos = zeropage_indexed(cpu, cpu.mem[cpu.reg.pc + 1], &emulator::Registers::x);
     decrement_operation(cpu, pos);
     return std::make_optional<InstructionConfig>(2, 5);
 }
@@ -951,14 +954,14 @@ std::optional<InstructionConfig> dec_zp_indexed(emulator::Cpu& cpu, std::span<co
 std::optional<InstructionConfig> dec_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
     // (hsb << 8) + lsb convert little endian to the address
-    auto const lsb = program[cpu.reg.pc + 1];
-    auto const hsb = program[cpu.reg.pc + 2];
+    auto const lsb = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb = cpu.mem[cpu.reg.pc + 2];
     decrement_operation(cpu, (hsb << 8) | lsb);
     return std::make_optional<InstructionConfig>(3, 6);
 }
@@ -966,13 +969,13 @@ std::optional<InstructionConfig> dec_abs(emulator::Cpu& cpu, std::span<const std
 std::optional<InstructionConfig> dec_abs_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
     // (hsb << 8) + lsb convert little endian to the address
-    auto const pos = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], &emulator::Registers::x);
+    auto const pos = absolute_indexed(cpu, cpu.mem[cpu.reg.pc + 1], cpu.mem[cpu.reg.pc + 2], &emulator::Registers::x);
     decrement_operation(cpu, pos);
     return std::make_optional<InstructionConfig>(3, 7);
 }
@@ -1028,11 +1031,11 @@ Instruction st_indirect(std::uint8_t emulator::Registers::*from, std::uint8_t em
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 1) >= program.size())
+        if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
-        auto const word_pos = program[cpu.reg.pc + 1];
+        auto const word_pos = cpu.mem[cpu.reg.pc + 1];
 
         // TODO : This is unsafe
         auto const lsb = cpu.mem[word_pos];
@@ -1053,12 +1056,12 @@ Instruction st_zeropage(std::uint8_t emulator::Registers::*from)
     {
         ENABLE_PROFILER(cpu);
         // LOAD Value into accumulator
-        if ((cpu.reg.pc + 1) >= program.size())
+        if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
-        auto const value = program[cpu.reg.pc + 1];
+        auto const value = cpu.mem[cpu.reg.pc + 1];
         cpu.mem[value]   = (cpu.reg).*from;
 
         return std::make_optional<InstructionConfig>(2, 3);
@@ -1076,12 +1079,12 @@ Instruction st_zeropage_indexed(std::uint8_t emulator::Registers::*from, std::ui
     {
         ENABLE_PROFILER(cpu);
         // LOAD Value into accumulator
-        if ((cpu.reg.pc + 1) >= program.size())
+        if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
-        auto const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], index);
+        auto const pos = zeropage_indexed(cpu, cpu.mem[cpu.reg.pc + 1], index);
         cpu.mem[pos]   = (cpu.reg).*from;
 
         return std::make_optional<InstructionConfig>(2, 3);
@@ -1094,12 +1097,12 @@ Instruction sta_absolute_indexed(std::uint8_t emulator::Registers::*index)
     {
         ENABLE_PROFILER(cpu);
         // LOAD Value into accumulator
-        if ((cpu.reg.pc + 2) >= program.size())
+        if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
-        auto const pos = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], index);
+        auto const pos = absolute_indexed(cpu, cpu.mem[cpu.reg.pc + 1], cpu.mem[cpu.reg.pc + 2], index);
         cpu.mem[pos]   = cpu.reg.a;
 
         // TODO : Return correct number of cycles
@@ -1112,14 +1115,14 @@ Instruction st_absolute(std::uint8_t emulator::Registers::*from)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 2) >= program.size())
+        if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
         // (hsb << 8) + lsb convert little endian to the address
-        auto const lsb            = program[cpu.reg.pc + 1];
-        auto const hsb            = program[cpu.reg.pc + 2];
+        auto const lsb            = cpu.mem[cpu.reg.pc + 1];
+        auto const hsb            = cpu.mem[cpu.reg.pc + 2];
         cpu.mem[(hsb << 8) | lsb] = (cpu.reg).*from;
 
         return std::make_optional<InstructionConfig>(3, 4);
@@ -1129,12 +1132,12 @@ Instruction st_absolute(std::uint8_t emulator::Registers::*from)
 std::optional<InstructionConfig> sta_index_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const pos = indexed_indirect(cpu, program[cpu.reg.pc + 1]);
+    auto const pos = indexed_indirect(cpu, cpu.mem[cpu.reg.pc + 1]);
     cpu.mem[pos]   = cpu.reg.a;
     return std::make_optional<InstructionConfig>(2, 6);
 }
@@ -1155,12 +1158,12 @@ Instruction cmp_immediate_reg(std::uint8_t emulator::Registers::*reg)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 1) >= program.size())
+        if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
-        cmp_operation(cpu, reg, program[cpu.reg.pc + 1]);
+        cmp_operation(cpu, reg, cpu.mem[cpu.reg.pc + 1]);
         return std::make_optional<InstructionConfig>(2, 2);
     };
 }
@@ -1171,12 +1174,12 @@ Instruction cmp_zeropage_reg(std::uint8_t emulator::Registers::*reg)
     {
         ENABLE_PROFILER(cpu);
 
-        if ((cpu.reg.pc + 1) >= program.size())
+        if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
-        auto const memory = program[cpu.reg.pc + 1];
+        auto const memory = cpu.mem[cpu.reg.pc + 1];
         cmp_operation(cpu, reg, cpu.mem[memory]);
         return std::make_optional<InstructionConfig>(2, 3);
     };
@@ -1185,12 +1188,12 @@ Instruction cmp_zeropage_reg(std::uint8_t emulator::Registers::*reg)
 std::optional<InstructionConfig> cmp_zp_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
+    auto const pos = zeropage_indexed(cpu, cpu.mem[cpu.reg.pc + 1], &emulator::Registers::x);
     cmp_operation(cpu, &emulator::Registers::a, cpu.mem[pos]);
     return std::make_optional<InstructionConfig>(2, 4);
 }
@@ -1200,14 +1203,14 @@ Instruction cmp_absolute(std::uint8_t emulator::Registers::*reg)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 2) >= program.size())
+        if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
         // (hsb << 8) + lsb convert little endian to the address
-        auto const lsb  = program[cpu.reg.pc + 1];
-        auto const hsb  = program[cpu.reg.pc + 2];
+        auto const lsb  = cpu.mem[cpu.reg.pc + 1];
+        auto const hsb  = cpu.mem[cpu.reg.pc + 2];
         auto const addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
 
         cmp_operation(cpu, reg, cpu.mem[addr]);
@@ -1220,12 +1223,12 @@ Instruction cmp_abs_indexed(std::uint8_t emulator::Registers::*index)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 2) >= program.size())
+        if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
-        auto const pos = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], index);
+        auto const pos = absolute_indexed(cpu, cpu.mem[cpu.reg.pc + 1], cpu.mem[cpu.reg.pc + 2], index);
         cmp_operation(cpu, &emulator::Registers::a, cpu.mem[pos]);
 
         // TODO : Cycle add should reflect the boundary checks
@@ -1237,12 +1240,12 @@ Instruction cmp_abs_indexed(std::uint8_t emulator::Registers::*index)
 std::optional<InstructionConfig> cmp_indexed_indirect(emulator::Cpu& cpu, std::span<std::uint8_t const> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const pos = indexed_indirect(cpu, program[cpu.reg.pc + 1]);
+    auto const pos = indexed_indirect(cpu, cpu.mem[cpu.reg.pc + 1]);
     cmp_operation(cpu, &emulator::Registers::a, cpu.mem[pos]);
     return std::make_optional<InstructionConfig>(2, 6);
 }
@@ -1250,12 +1253,12 @@ std::optional<InstructionConfig> cmp_indexed_indirect(emulator::Cpu& cpu, std::s
 std::optional<InstructionConfig> cmp_indirect_indexed(emulator::Cpu& cpu, std::span<std::uint8_t const> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const pos = indirect_indexed(cpu, program[cpu.reg.pc + 1]);
+    auto const pos = indirect_indexed(cpu, cpu.mem[cpu.reg.pc + 1]);
     cmp_operation(cpu, &emulator::Registers::a, cpu.mem[pos]);
     // TODO : Cycle add should reflect the boundary checks
     std::size_t const cycle_add = 0;
@@ -1266,13 +1269,13 @@ std::optional<InstructionConfig> cmp_indirect_indexed(emulator::Cpu& cpu, std::s
 std::optional<InstructionConfig> jmp_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const lsb  = program[cpu.reg.pc + 1];
-    auto const hsb  = program[cpu.reg.pc + 2];
+    auto const lsb  = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb  = cpu.mem[cpu.reg.pc + 2];
     auto const addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
     cpu.reg.pc      = addr;
     return std::make_optional<InstructionConfig>(0, 3);
@@ -1281,13 +1284,13 @@ std::optional<InstructionConfig> jmp_abs(emulator::Cpu& cpu, std::span<const std
 std::optional<InstructionConfig> jmp_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const lsb           = program[cpu.reg.pc + 1];
-    auto const hsb           = program[cpu.reg.pc + 2];
+    auto const lsb           = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb           = cpu.mem[cpu.reg.pc + 2];
     auto const addr          = static_cast<std::uint16_t>((hsb << 8) | lsb);
     auto const indirect_addr = indirect(cpu, addr);
     cpu.reg.pc               = indirect_addr;
@@ -1299,11 +1302,11 @@ std::optional<InstructionConfig> jmp_indirect(emulator::Cpu& cpu, std::span<cons
 std::optional<InstructionConfig> bne(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
-    auto const offset = static_cast<std::int8_t>(program[cpu.reg.pc + 1]);
+    auto const offset = static_cast<std::int8_t>(cpu.mem[cpu.reg.pc + 1]);
     cpu.reg.pc += cpu.flags.z ? 0 : offset;
 
     return std::make_optional<InstructionConfig>(2);
@@ -1323,12 +1326,12 @@ Instruction branch_flag_value(bool emulator::Flags::*flag)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 1) >= program.size())
+        if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
-        auto const offset = ((cpu.flags).*flag == Value) ? static_cast<std::int8_t>(program[cpu.reg.pc + 1]) : 0;
+        auto const offset = ((cpu.flags).*flag == Value) ? static_cast<std::int8_t>(cpu.mem[cpu.reg.pc + 1]) : 0;
         return std::make_optional<InstructionConfig>(2 + offset);
     };
 }
@@ -1365,49 +1368,49 @@ std::optional<std::size_t> eor_operation(emulator::Cpu& cpu, std::uint8_t value)
 std::optional<std::size_t> eor_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    return eor_operation<2>(cpu, program[cpu.reg.pc + 1]);
+    return eor_operation<2>(cpu, cpu.mem[cpu.reg.pc + 1]);
 }
 
 std::optional<std::size_t> eor_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const offset = program[cpu.reg.pc + 1];
+    auto const offset = cpu.mem[cpu.reg.pc + 1];
     return eor_operation<2>(cpu, cpu.mem[offset]);
 }
 
 std::optional<std::size_t> eor_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    std::uint16_t const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
+    std::uint16_t const pos = zeropage_indexed(cpu, cpu.mem[cpu.reg.pc + 1], &emulator::Registers::x);
     return eor_operation<2>(cpu, cpu.mem[pos]);
 }
 
 std::optional<std::size_t> eor_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
     // (hsb << 8) + lsb convert little endian to the address
-    auto const lsb  = program[cpu.reg.pc + 1];
-    auto const hsb  = program[cpu.reg.pc + 2];
+    auto const lsb  = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb  = cpu.mem[cpu.reg.pc + 2];
     auto const addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
 
     return eor_operation<3>(cpu, cpu.mem[addr]);
@@ -1418,12 +1421,12 @@ Instruction eor_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 2) >= program.size())
+        if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
-        auto const addr = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], reg);
+        auto const addr = absolute_indexed(cpu, cpu.mem[cpu.reg.pc + 1], cpu.mem[cpu.reg.pc + 2], reg);
 
         return eor_operation<3>(cpu, cpu.mem[addr]);
     };
@@ -1432,73 +1435,73 @@ Instruction eor_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
 std::optional<std::size_t> eor_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const addr = indexed_indirect(cpu, program[cpu.reg.pc + 1]);
+    auto const addr = indexed_indirect(cpu, cpu.mem[cpu.reg.pc + 1]);
     return eor_operation<2>(cpu, cpu.mem[addr]);
 }
 
 std::optional<std::size_t> eor_acc_indirect_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const addr = indirect_indexed(cpu, program[cpu.reg.pc + 1]);
+    auto const addr = indirect_indexed(cpu, cpu.mem[cpu.reg.pc + 1]);
     return eor_operation<2>(cpu, cpu.mem[addr]);
 }
 
 std::optional<std::size_t> and_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    return and_operation<2>(cpu, program[cpu.reg.pc + 1]);
+    return and_operation<2>(cpu, cpu.mem[cpu.reg.pc + 1]);
 }
 
 std::optional<std::size_t> and_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const offset = program[cpu.reg.pc + 1];
+    auto const offset = cpu.mem[cpu.reg.pc + 1];
     return and_operation<2>(cpu, cpu.mem[offset]);
 }
 
 std::optional<std::size_t> and_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    std::uint16_t const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
+    std::uint16_t const pos = zeropage_indexed(cpu, cpu.mem[cpu.reg.pc + 1], &emulator::Registers::x);
     return and_operation<2>(cpu, cpu.mem[pos]);
 }
 
 std::optional<std::size_t> and_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
     // (hsb << 8) + lsb convert little endian to the address
-    auto const lsb  = program[cpu.reg.pc + 1];
-    auto const hsb  = program[cpu.reg.pc + 2];
+    auto const lsb  = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb  = cpu.mem[cpu.reg.pc + 2];
     auto const addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
 
     return and_operation<3>(cpu, cpu.mem[addr]);
@@ -1509,12 +1512,12 @@ Instruction and_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 2) >= program.size())
+        if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
-        auto const addr = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], reg);
+        auto const addr = absolute_indexed(cpu, cpu.mem[cpu.reg.pc + 1], cpu.mem[cpu.reg.pc + 2], reg);
 
         return and_operation<3>(cpu, cpu.mem[addr]);
     };
@@ -1523,73 +1526,73 @@ Instruction and_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
 std::optional<std::size_t> and_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const addr = indexed_indirect(cpu, program[cpu.reg.pc + 1]);
+    auto const addr = indexed_indirect(cpu, cpu.mem[cpu.reg.pc + 1]);
     return and_operation<2>(cpu, cpu.mem[addr]);
 }
 
 std::optional<std::size_t> and_acc_indirect_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const addr = indirect_indexed(cpu, program[cpu.reg.pc + 1]);
+    auto const addr = indirect_indexed(cpu, cpu.mem[cpu.reg.pc + 1]);
     return and_operation<2>(cpu, cpu.mem[addr]);
 }
 
 std::optional<std::size_t> or_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    return ora_operation<2>(cpu, program[cpu.reg.pc + 1]);
+    return ora_operation<2>(cpu, cpu.mem[cpu.reg.pc + 1]);
 }
 
 std::optional<std::size_t> or_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const offset = program[cpu.reg.pc + 1];
+    auto const offset = cpu.mem[cpu.reg.pc + 1];
     return ora_operation<2>(cpu, cpu.mem[offset]);
 }
 
 std::optional<std::size_t> or_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    std::uint16_t const pos = zeropage_indexed(cpu, program[cpu.reg.pc + 1], &emulator::Registers::x);
+    std::uint16_t const pos = zeropage_indexed(cpu, cpu.mem[cpu.reg.pc + 1], &emulator::Registers::x);
     return ora_operation<2>(cpu, cpu.mem[pos]);
 }
 
 std::optional<std::size_t> or_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 2) >= program.size())
+    if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
     // (hsb << 8) + lsb convert little endian to the address
-    auto const lsb  = program[cpu.reg.pc + 1];
-    auto const hsb  = program[cpu.reg.pc + 2];
+    auto const lsb  = cpu.mem[cpu.reg.pc + 1];
+    auto const hsb  = cpu.mem[cpu.reg.pc + 2];
     auto const addr = static_cast<std::uint16_t>((hsb << 8) | lsb);
 
     return ora_operation<3>(cpu, cpu.mem[addr]);
@@ -1600,12 +1603,12 @@ Instruction or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
         ENABLE_PROFILER(cpu);
-        if ((cpu.reg.pc + 2) >= program.size())
+        if ((cpu.reg.pc + 2) >= (STARTING_ADDR + program.size()))
         {
             return std::nullopt;
         }
 
-        auto const addr = absolute_indexed(cpu, program[cpu.reg.pc + 1], program[cpu.reg.pc + 2], reg);
+        auto const addr = absolute_indexed(cpu, cpu.mem[cpu.reg.pc + 1], cpu.mem[cpu.reg.pc + 2], reg);
 
         return ora_operation<3>(cpu, cpu.mem[addr]);
     };
@@ -1614,24 +1617,24 @@ Instruction or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
 std::optional<std::size_t> or_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const addr = indexed_indirect(cpu, program[cpu.reg.pc + 1]);
+    auto const addr = indexed_indirect(cpu, cpu.mem[cpu.reg.pc + 1]);
     return ora_operation<2>(cpu, cpu.mem[addr]);
 }
 
 std::optional<std::size_t> or_acc_indirect_index(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
 {
     ENABLE_PROFILER(cpu);
-    if ((cpu.reg.pc + 1) >= program.size())
+    if ((cpu.reg.pc + 1) >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
-    auto const addr = indirect_indexed(cpu, program[cpu.reg.pc + 1]);
+    auto const addr = indirect_indexed(cpu, cpu.mem[cpu.reg.pc + 1]);
     return ora_operation<2>(cpu, cpu.mem[addr]);
 }
 
@@ -1843,13 +1846,13 @@ std::optional<InstructionConfig> execute_next(
 {
     ENABLE_PROFILER(cpu);
     // Read 1 byte for the operator
-    if (cpu.reg.pc >= program.size())
+    if (cpu.reg.pc >= (STARTING_ADDR + program.size()))
     {
         return std::nullopt;
     }
 
     // Find the correct function to execute here
-    auto const command = program[cpu.reg.pc];
+    auto const command = cpu.mem[cpu.reg.pc];
 
 
     auto const instruction = instructions[command];
@@ -1864,15 +1867,38 @@ std::optional<InstructionConfig> execute_next(
     }
 }
 
+bool load_program(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+{
+    ENABLE_PROFILER(cpu);
+
+    // Make sure the program data is at most 32K big,
+    // or fits in between 0x8000-0xffff inclusive
+    if (program.size() > 0x7fff)
+    {
+        return false;
+    }
+
+    std::memcpy(&cpu.mem[STARTING_ADDR], program.data(), program.size());
+    cpu.reg.pc = STARTING_ADDR;
+    return true;
+}
 
 export namespace emulator
 {
+    // ASSUMPTION : execute(cpu, program) will load the program data into
+    // the address starting at 0x8000-0xffff
     std::size_t execute(Cpu& cpu, std::span<const std::uint8_t> program)
     {
         std::size_t n_cycles = 0;
         ENABLE_PROFILER(cpu);
         auto const instructions = get_instructions();
-        while (cpu.reg.pc < program.size())
+
+        if (!load_program(cpu, program))
+        {
+            return 0;
+        }
+
+        while (cpu.reg.pc < (STARTING_ADDR + program.size()))
         {
             auto const time_now  = std::chrono::high_resolution_clock::now();
             auto maybe_increment = execute_next(cpu, program, instructions);
