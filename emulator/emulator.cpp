@@ -1,9 +1,5 @@
 module;
 
-// #ifdef BUILD_PROFILER
-import profiler;
-// #endif // BUILD_PROFILER
-
 #include <algorithm>
 #include <array>
 #include <bitset>
@@ -26,9 +22,11 @@ import profiler;
 #define CLOCK_SPEED_MHZ 1.79
 #endif // CLOCK_SPEED_MHZ
 
-#include <fmt/format.h>
-
 export module emulator;
+
+#ifdef BUILD_PROFILER
+import profiler;
+#endif // BUILD_PROFILER
 
 // Define a macro for the profiler
 #ifdef BUILD_PROFILER
@@ -36,7 +34,7 @@ struct ProfileBook
 {
     std::unordered_map<std::string, double> functions;
 
-    bool update(std::string const& func_name, double profile)
+    auto update(std::string const& func_name, double profile) -> bool
     {
         auto found = functions.find(func_name);
         if (found != end(functions))
@@ -50,9 +48,11 @@ struct ProfileBook
         return true;
     }
 };
+#endif // BUILD_PROFILER
 
+#ifdef BUILD_PROFILER
 #define ENABLE_PROFILER(cpu) \
-    volatile auto profile_result_666 = profiler::FunctionProfiler<ProfileBook, std::string, double>(cpu.profiler_book)
+    volatile auto profile_result_666 = profiler::FunctionProfiler<ProfileBook, std::string, double>((cpu).profiler_book)
 #else
 #define ENABLE_PROFILER(cpu)
 #endif // BUILD_PROFILER
@@ -62,9 +62,9 @@ export namespace emulator
     class OpcodeNotSupported : public std::exception
     {
     public:
-        OpcodeNotSupported(std::string opcode) : _error_msg{"opcode not supported: " + opcode} {}
+        OpcodeNotSupported(const std::string& opcode) : _error_msg{"opcode not supported: " + opcode} {}
 
-        const char* what() const throw() override
+        auto what() const noexcept -> const char* override
         {
             return _error_msg.c_str();
         }
@@ -93,7 +93,7 @@ export namespace emulator
         std::uint8_t sp{0xff};
     };
 
-    bool operator==(Flags const& lhs, Flags const& rhs)
+    auto operator==(Flags const& lhs, Flags const& rhs) -> bool
     {
         return lhs.n == rhs.n && lhs.v == rhs.v && lhs.b == rhs.b && lhs.d == rhs.d && lhs.i == rhs.i && lhs.z == rhs.z
                && lhs.c == rhs.c;
@@ -134,7 +134,7 @@ export namespace emulator
         // If profiling is enabled, create space for a bookeper
         std::shared_ptr<ProfileBook> profiler_book{std::make_shared<ProfileBook>()};
 
-        std::unordered_map<std::string, double> current_profile()
+        auto current_profile() -> std::unordered_map<std::string, double>
         {
             if (!profiler_book)
             {
@@ -174,7 +174,8 @@ using Instruction = std::function<std::optional<InstructionConfig>(emulator::Cpu
 /// @param cpu is the cpu object to operate on
 /// @param value is the zeropage address to add the index to
 /// @param index is the register to use as the index add value
-inline std::uint16_t zeropage_indexed(emulator::Cpu& cpu, std::uint8_t value, std::uint8_t emulator::Registers::*index)
+inline auto zeropage_indexed(emulator::Cpu& cpu, std::uint8_t value, std::uint8_t emulator::Registers::* index)
+    -> std::uint16_t
 {
     auto const masked = ((cpu.reg).*index + value) & 0xff;
     return static_cast<std::uint16_t>(masked);
@@ -188,7 +189,7 @@ inline std::uint16_t zeropage_indexed(emulator::Cpu& cpu, std::uint8_t value, st
 /// @param index is the pointer to the register to use as the index add.
 /// @return the resolved target address.
 inline std::uint16_t absolute_indexed(
-    emulator::Cpu& cpu, std::uint8_t lsb, std::uint8_t hsb, std::uint8_t emulator::Registers::*index)
+    emulator::Cpu& cpu, std::uint8_t lsb, std::uint8_t hsb, std::uint8_t emulator::Registers::* index)
 {
     // Do we want to put these numbers as std::uint16_t?
     auto const address        = (hsb << 8) | lsb;
@@ -237,19 +238,19 @@ inline std::uint16_t indirect_indexed(emulator::Cpu& cpu, std::uint8_t val)
 }
 
 /* Functions with no context */
-std::optional<InstructionConfig> nop(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+auto nop(emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
 {
     return std::make_optional<InstructionConfig>(1, 2);
 }
 
-void bit_operation(emulator::Cpu& cpu, std::uint8_t value)
+auto bit_operation(emulator::Cpu& cpu, std::uint8_t value) -> void
 {
     cpu.flags.n = static_cast<bool>(value & 0b1000'0000);
     cpu.flags.v = static_cast<bool>(value & 0b0100'0000);
     cpu.flags.z = !static_cast<bool>(cpu.reg.a & value);
 }
 
-std::optional<InstructionConfig> bit_zp(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+auto bit_zp(emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -262,7 +263,7 @@ std::optional<InstructionConfig> bit_zp(emulator::Cpu& cpu, std::span<const std:
     return std::make_optional<InstructionConfig>(2, 3);
 }
 
-std::optional<InstructionConfig> bit_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+auto bit_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -280,7 +281,8 @@ std::optional<InstructionConfig> bit_abs(emulator::Cpu& cpu, std::span<const std
 /* End functions with no context */
 
 /* Stack Related Functions */
-std::optional<InstructionConfig> push_accumulator_to_stack(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+auto push_accumulator_to_stack(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     // TODO : can we detect stack overflows?
     // TODO : according to Masswerk, we don't set any flags
@@ -292,7 +294,8 @@ std::optional<InstructionConfig> push_accumulator_to_stack(emulator::Cpu& cpu, s
     return std::make_optional<InstructionConfig>(1, 0);
 }
 
-std::optional<InstructionConfig> push_status_reg_to_stack(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+auto push_status_reg_to_stack(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     // TODO : can we detect stack overflows?
     // TODO : according to Masswerk, we don't set any flags
@@ -307,13 +310,14 @@ std::optional<InstructionConfig> push_status_reg_to_stack(emulator::Cpu& cpu, st
     return std::make_optional<InstructionConfig>(1, 0);
 }
 
-std::optional<InstructionConfig> pull_stack_to_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+auto pull_stack_to_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     // TODO : can we detect stack overflows?
     // TODO : according to Masswerk, we don't set any flags
     cpu.reg.sp++;
-    std::uint16_t const mem_loc = static_cast<std::uint16_t>(0x0100 + cpu.reg.sp);
-    std::uint8_t const val      = cpu.mem[mem_loc];
+    auto const mem_loc     = static_cast<std::uint16_t>(0x0100 + cpu.reg.sp);
+    std::uint8_t const val = cpu.mem[mem_loc];
 
     cpu.flags.n = static_cast<bool>(val & 0b1000'0000);
     cpu.flags.z = val == 0;
@@ -321,7 +325,8 @@ std::optional<InstructionConfig> pull_stack_to_accumulator(emulator::Cpu& cpu, s
     return std::make_optional<InstructionConfig>(1, 0);
 }
 
-std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+auto pull_stack_to_status_reg(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     // TODO : can we detect stack overflows?
     // TODO : according to Masswerk, we don't set any flags
@@ -329,8 +334,8 @@ std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, st
     // TODO : Abstract these two lines into function/macro to get
     // TODO : the top of the stack pointer
     cpu.reg.sp++;
-    std::uint16_t const mem_loc = static_cast<std::uint16_t>(0x0100 + cpu.reg.sp);
-    std::uint8_t const val      = cpu.mem[mem_loc];
+    auto const mem_loc     = static_cast<std::uint16_t>(0x0100 + cpu.reg.sp);
+    std::uint8_t const val = cpu.mem[mem_loc];
 
     cpu.flags.n = static_cast<bool>(val & 0b1000'0000);
     cpu.flags.v = static_cast<bool>(val & 0b0100'0000);
@@ -345,7 +350,7 @@ std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, st
 /* End of Stack Related Functions */
 
 /* Bit shift/rotation functions */
-[[nodiscard]] std::uint8_t rotate_right_operation(emulator::Cpu& cpu, std::uint8_t value)
+[[nodiscard]] auto rotate_right_operation(emulator::Cpu& cpu, std::uint8_t value) -> std::uint8_t
 {
     std::uint8_t const new_value = (value >> 1) | (static_cast<std::uint8_t>(cpu.flags.c) << 7);
     cpu.flags.n                  = cpu.flags.c;
@@ -354,7 +359,7 @@ std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, st
     return new_value;
 }
 
-[[nodiscard]] std::uint8_t rotate_left_operation(emulator::Cpu& cpu, std::uint8_t value)
+[[nodiscard]] auto rotate_left_operation(emulator::Cpu& cpu, std::uint8_t value) -> std::uint8_t
 {
     std::uint8_t const new_value = (value << 1) | (static_cast<std::uint8_t>(cpu.flags.c));
     cpu.flags.n                  = new_value & 0b1000'0000;
@@ -363,7 +368,7 @@ std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, st
     return new_value;
 }
 
-[[nodiscard]] std::uint8_t shift_right_operation(emulator::Cpu& cpu, std::uint8_t value)
+[[nodiscard]] auto shift_right_operation(emulator::Cpu& cpu, std::uint8_t value) -> std::uint8_t
 {
     std::uint8_t const new_value = value >> 1;
     cpu.flags.n                  = 0;
@@ -372,7 +377,7 @@ std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, st
     return new_value;
 }
 
-[[nodiscard]] std::uint8_t shift_left_operation(emulator::Cpu& cpu, std::uint8_t value)
+[[nodiscard]] auto shift_left_operation(emulator::Cpu& cpu, std::uint8_t value) -> std::uint8_t
 {
     std::uint8_t const new_value = value << 1;
     cpu.flags.n                  = new_value & 0b1000'0000;
@@ -381,14 +386,16 @@ std::optional<InstructionConfig> pull_stack_to_status_reg(emulator::Cpu& cpu, st
     return new_value;
 }
 
-std::optional<InstructionConfig> ror_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto ror_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     cpu.reg.a = rotate_right_operation(cpu, cpu.reg.a);
     return std::make_optional<InstructionConfig>(1);
 }
 
-std::optional<InstructionConfig> ror_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto ror_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -401,7 +408,8 @@ std::optional<InstructionConfig> ror_zeropage(emulator::Cpu& cpu, std::span<cons
     return std::make_optional<InstructionConfig>(2);
 }
 
-std::optional<InstructionConfig> ror_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto ror_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -417,7 +425,8 @@ std::optional<InstructionConfig> ror_zeropage_indexed(emulator::Cpu& cpu, std::s
     return std::make_optional<InstructionConfig>(2);
 }
 
-std::optional<InstructionConfig> ror_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto ror_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -433,7 +442,8 @@ std::optional<InstructionConfig> ror_absolute(emulator::Cpu& cpu, std::span<cons
     return std::make_optional<InstructionConfig>(3);
 }
 
-std::optional<InstructionConfig> ror_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto ror_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -450,14 +460,16 @@ std::optional<InstructionConfig> ror_absolute_indexed(emulator::Cpu& cpu, std::s
     return std::make_optional<InstructionConfig>(3);
 }
 
-std::optional<InstructionConfig> rol_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto rol_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     cpu.reg.a = rotate_left_operation(cpu, cpu.reg.a);
     return std::make_optional<InstructionConfig>(1);
 }
 
-std::optional<InstructionConfig> rol_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto rol_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -470,7 +482,8 @@ std::optional<InstructionConfig> rol_zeropage(emulator::Cpu& cpu, std::span<cons
     return std::make_optional<InstructionConfig>(2);
 }
 
-std::optional<InstructionConfig> rol_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto rol_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -486,7 +499,8 @@ std::optional<InstructionConfig> rol_zeropage_indexed(emulator::Cpu& cpu, std::s
     return std::make_optional<InstructionConfig>(2);
 }
 
-std::optional<InstructionConfig> rol_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto rol_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -502,7 +516,8 @@ std::optional<InstructionConfig> rol_absolute(emulator::Cpu& cpu, std::span<cons
     return std::make_optional<InstructionConfig>(3);
 }
 
-std::optional<InstructionConfig> rol_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto rol_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -519,14 +534,16 @@ std::optional<InstructionConfig> rol_absolute_indexed(emulator::Cpu& cpu, std::s
     return std::make_optional<InstructionConfig>(3);
 }
 
-std::optional<InstructionConfig> lsr_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto lsr_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     cpu.reg.a = shift_right_operation(cpu, cpu.reg.a);
     return std::make_optional<InstructionConfig>(1);
 }
 
-std::optional<InstructionConfig> lsr_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto lsr_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -539,7 +556,8 @@ std::optional<InstructionConfig> lsr_zeropage(emulator::Cpu& cpu, std::span<cons
     return std::make_optional<InstructionConfig>(2);
 }
 
-std::optional<InstructionConfig> lsr_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto lsr_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -555,7 +573,8 @@ std::optional<InstructionConfig> lsr_zeropage_indexed(emulator::Cpu& cpu, std::s
     return std::make_optional<InstructionConfig>(2);
 }
 
-std::optional<InstructionConfig> lsr_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto lsr_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -571,7 +590,8 @@ std::optional<InstructionConfig> lsr_absolute(emulator::Cpu& cpu, std::span<cons
     return std::make_optional<InstructionConfig>(3);
 }
 
-std::optional<InstructionConfig> lsr_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto lsr_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -588,14 +608,16 @@ std::optional<InstructionConfig> lsr_absolute_indexed(emulator::Cpu& cpu, std::s
     return std::make_optional<InstructionConfig>(3);
 }
 
-std::optional<InstructionConfig> asl_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto asl_accumulator(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     cpu.reg.a = shift_left_operation(cpu, cpu.reg.a);
     return std::make_optional<InstructionConfig>(1);
 }
 
-std::optional<InstructionConfig> asl_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto asl_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -608,7 +630,8 @@ std::optional<InstructionConfig> asl_zeropage(emulator::Cpu& cpu, std::span<cons
     return std::make_optional<InstructionConfig>(2);
 }
 
-std::optional<InstructionConfig> asl_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto asl_zeropage_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -624,7 +647,8 @@ std::optional<InstructionConfig> asl_zeropage_indexed(emulator::Cpu& cpu, std::s
     return std::make_optional<InstructionConfig>(2);
 }
 
-std::optional<InstructionConfig> asl_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto asl_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -640,7 +664,8 @@ std::optional<InstructionConfig> asl_absolute(emulator::Cpu& cpu, std::span<cons
     return std::make_optional<InstructionConfig>(3);
 }
 
-std::optional<InstructionConfig> asl_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto asl_absolute_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -659,7 +684,7 @@ std::optional<InstructionConfig> asl_absolute_indexed(emulator::Cpu& cpu, std::s
 /* End bit shift/rotation functions */
 
 /* Flag setting opcodes */
-Instruction set_flag(bool emulator::Flags::*f)
+[[nodiscard]] auto set_flag(bool emulator::Flags::* f) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -671,7 +696,7 @@ Instruction set_flag(bool emulator::Flags::*f)
 /* End of flag setting opcodes */
 
 /* Flag clearning operation */
-Instruction clear_flag(bool emulator::Flags::*f)
+[[nodiscard]] auto clear_flag(bool emulator::Flags::* f) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -682,7 +707,7 @@ Instruction clear_flag(bool emulator::Flags::*f)
 }
 /* End of flag clearning operations */
 
-Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
+[[nodiscard]] auto ld_immediate(std::uint8_t emulator::Registers::* reg) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -701,7 +726,7 @@ Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-Instruction ld_zeropage(std::uint8_t emulator::Registers::*reg)
+[[nodiscard]] auto ld_zeropage(std::uint8_t emulator::Registers::* reg) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -730,7 +755,8 @@ Instruction ld_zeropage(std::uint8_t emulator::Registers::*reg)
 /// @param add the register to use as the index add.
 /// @return Instruction containing the number of bytes consumed from the
 /// program and the cycles taken.
-Instruction ld_zeropage_indexed(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+[[nodiscard]] auto ld_zeropage_indexed(std::uint8_t emulator::Registers::* to, std::uint8_t emulator::Registers::* add)
+    -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -752,7 +778,7 @@ Instruction ld_zeropage_indexed(std::uint8_t emulator::Registers::*to, std::uint
     };
 }
 
-Instruction ld_absolute(std::uint8_t emulator::Registers::*to)
+[[nodiscard]] auto ld_absolute(std::uint8_t emulator::Registers::* to) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -775,7 +801,8 @@ Instruction ld_absolute(std::uint8_t emulator::Registers::*to)
     };
 }
 
-Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+[[nodiscard]] auto ld_absolute_plus_reg(std::uint8_t emulator::Registers::* to, std::uint8_t emulator::Registers::* add)
+    -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -798,7 +825,8 @@ Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::*to, std::uin
 
 // This is basically zeropage + x, but an extra indirection with
 // the value ad zeropage + x as a position
-Instruction ld_index_indirect(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+[[nodiscard]] auto ld_index_indirect(std::uint8_t emulator::Registers::* to, std::uint8_t emulator::Registers::* add)
+    -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -824,7 +852,7 @@ Instruction ld_index_indirect(std::uint8_t emulator::Registers::*to, std::uint8_
     };
 }
 
-Instruction ld_indirect_index(std::uint8_t emulator::Registers::*to)
+[[nodiscard]] auto ld_indirect_index(std::uint8_t emulator::Registers::* to) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -844,7 +872,8 @@ Instruction ld_indirect_index(std::uint8_t emulator::Registers::*to)
     };
 }
 
-std::optional<InstructionConfig> inc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto inc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -860,7 +889,8 @@ std::optional<InstructionConfig> inc_zeropage(emulator::Cpu& cpu, std::span<cons
     return std::make_optional<InstructionConfig>(2, 5);
 }
 
-std::optional<InstructionConfig> inc_zeropage_plus_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto inc_zeropage_plus_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -877,7 +907,8 @@ std::optional<InstructionConfig> inc_zeropage_plus_x(emulator::Cpu& cpu, std::sp
     return std::make_optional<InstructionConfig>(2, 6);
 }
 
-std::optional<InstructionConfig> inc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto inc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -895,7 +926,8 @@ std::optional<InstructionConfig> inc_absolute(emulator::Cpu& cpu, std::span<cons
     return std::make_optional<InstructionConfig>(3, 6);
 }
 
-std::optional<InstructionConfig> inc_absolute_plus_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto inc_absolute_plus_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
 
@@ -922,7 +954,8 @@ void decrement_operation(emulator::Cpu& cpu, std::uint16_t pos)
     cpu.flags.n = cpu.mem[pos] & 0b1000'0000;
 }
 
-std::optional<InstructionConfig> dec_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto dec_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -935,7 +968,8 @@ std::optional<InstructionConfig> dec_zeropage(emulator::Cpu& cpu, std::span<cons
     return std::make_optional<InstructionConfig>(2, 5);
 }
 
-std::optional<InstructionConfig> dec_zp_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto dec_zp_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -948,7 +982,8 @@ std::optional<InstructionConfig> dec_zp_indexed(emulator::Cpu& cpu, std::span<co
     return std::make_optional<InstructionConfig>(2, 5);
 }
 
-std::optional<InstructionConfig> dec_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto dec_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -963,7 +998,8 @@ std::optional<InstructionConfig> dec_abs(emulator::Cpu& cpu, std::span<const std
     return std::make_optional<InstructionConfig>(3, 6);
 }
 
-std::optional<InstructionConfig> dec_abs_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto dec_abs_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -978,7 +1014,7 @@ std::optional<InstructionConfig> dec_abs_indexed(emulator::Cpu& cpu, std::span<c
 }
 /* End Decrement operations */
 
-Instruction inc_reg(std::uint8_t emulator::Registers::*reg)
+[[nodiscard]] auto inc_reg(std::uint8_t emulator::Registers::* reg) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> /* program */)
     {
@@ -990,7 +1026,7 @@ Instruction inc_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-Instruction dec_reg(std::uint8_t emulator::Registers::*reg)
+[[nodiscard]] auto dec_reg(std::uint8_t emulator::Registers::* reg) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> /* program */)
     {
@@ -1002,7 +1038,8 @@ Instruction dec_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-Instruction transfer_regs(std::uint8_t emulator::Registers::*from, std::uint8_t emulator::Registers::*to)
+[[nodiscard]] auto transfer_regs(std::uint8_t emulator::Registers::* from, std::uint8_t emulator::Registers::* to)
+    -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> /* program */)
     {
@@ -1016,14 +1053,16 @@ Instruction transfer_regs(std::uint8_t emulator::Registers::*from, std::uint8_t 
 
 // This function sends the value stored in X to SP and
 // does not set any flags.
-std::optional<InstructionConfig> txa(emulator::Cpu& cpu, std::span<const std::uint8_t> /* program */)
+[[nodiscard]] auto txa(emulator::Cpu& cpu, std::span<const std::uint8_t> /* program */)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     cpu.reg.sp = cpu.reg.x;
     return std::make_optional<InstructionConfig>(1);
 }
 
-Instruction st_indirect(std::uint8_t emulator::Registers::*from, std::uint8_t emulator::Registers::*add)
+[[nodiscard]] auto st_indirect(std::uint8_t emulator::Registers::* from, std::uint8_t emulator::Registers::* add)
+    -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1047,7 +1086,7 @@ Instruction st_indirect(std::uint8_t emulator::Registers::*from, std::uint8_t em
     };
 }
 
-Instruction st_zeropage(std::uint8_t emulator::Registers::*from)
+[[nodiscard]] auto st_zeropage(std::uint8_t emulator::Registers::* from) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1070,7 +1109,8 @@ Instruction st_zeropage(std::uint8_t emulator::Registers::*from)
 /// arguments.
 /// @param from is the register containing the value to be stored in memory.
 /// @param index is the register used as the index (i.e. X or Y mostly).
-Instruction st_zeropage_indexed(std::uint8_t emulator::Registers::*from, std::uint8_t emulator::Registers::*index)
+[[nodiscard]] auto st_zeropage_indexed(
+    std::uint8_t emulator::Registers::* from, std::uint8_t emulator::Registers::* index) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1088,7 +1128,7 @@ Instruction st_zeropage_indexed(std::uint8_t emulator::Registers::*from, std::ui
     };
 }
 
-Instruction sta_absolute_indexed(std::uint8_t emulator::Registers::*index)
+[[nodiscard]] auto sta_absolute_indexed(std::uint8_t emulator::Registers::* index) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1107,7 +1147,7 @@ Instruction sta_absolute_indexed(std::uint8_t emulator::Registers::*index)
     };
 }
 
-Instruction st_absolute(std::uint8_t emulator::Registers::*from)
+[[nodiscard]] auto st_absolute(std::uint8_t emulator::Registers::* from) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1126,7 +1166,8 @@ Instruction st_absolute(std::uint8_t emulator::Registers::*from)
     };
 }
 
-std::optional<InstructionConfig> sta_index_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto sta_index_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1140,7 +1181,7 @@ std::optional<InstructionConfig> sta_index_indirect(emulator::Cpu& cpu, std::spa
 }
 
 // Compare instructions here
-void cmp_operation(emulator::Cpu& cpu, std::uint8_t emulator::Registers::*reg, std::uint8_t val)
+void cmp_operation(emulator::Cpu& cpu, std::uint8_t emulator::Registers::* reg, std::uint8_t val)
 {
     auto const comparison = (cpu.reg).*reg - val;
     cpu.flags.n           = comparison & 0b1000'0000; // Negative flag
@@ -1150,7 +1191,7 @@ void cmp_operation(emulator::Cpu& cpu, std::uint8_t emulator::Registers::*reg, s
 
 /// Compares whichever register was given to the immediate
 /// value in the next address in the program array
-Instruction cmp_immediate_reg(std::uint8_t emulator::Registers::*reg)
+[[nodiscard]] auto cmp_immediate_reg(std::uint8_t emulator::Registers::* reg) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1165,7 +1206,7 @@ Instruction cmp_immediate_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-Instruction cmp_zeropage_reg(std::uint8_t emulator::Registers::*reg)
+[[nodiscard]] auto cmp_zeropage_reg(std::uint8_t emulator::Registers::* reg) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1182,7 +1223,8 @@ Instruction cmp_zeropage_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-std::optional<InstructionConfig> cmp_zp_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto cmp_zp_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1195,7 +1237,7 @@ std::optional<InstructionConfig> cmp_zp_indexed(emulator::Cpu& cpu, std::span<co
     return std::make_optional<InstructionConfig>(2, 4);
 }
 
-Instruction cmp_absolute(std::uint8_t emulator::Registers::*reg)
+[[nodiscard]] auto cmp_absolute(std::uint8_t emulator::Registers::* reg) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1215,7 +1257,7 @@ Instruction cmp_absolute(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-Instruction cmp_abs_indexed(std::uint8_t emulator::Registers::*index)
+[[nodiscard]] auto cmp_abs_indexed(std::uint8_t emulator::Registers::* index) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1234,7 +1276,8 @@ Instruction cmp_abs_indexed(std::uint8_t emulator::Registers::*index)
     };
 }
 
-std::optional<InstructionConfig> cmp_indexed_indirect(emulator::Cpu& cpu, std::span<std::uint8_t const> program)
+[[nodiscard]] auto cmp_indexed_indirect(emulator::Cpu& cpu, std::span<std::uint8_t const> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1247,7 +1290,8 @@ std::optional<InstructionConfig> cmp_indexed_indirect(emulator::Cpu& cpu, std::s
     return std::make_optional<InstructionConfig>(2, 6);
 }
 
-std::optional<InstructionConfig> cmp_indirect_indexed(emulator::Cpu& cpu, std::span<std::uint8_t const> program)
+[[nodiscard]] auto cmp_indirect_indexed(emulator::Cpu& cpu, std::span<std::uint8_t const> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1263,7 +1307,8 @@ std::optional<InstructionConfig> cmp_indirect_indexed(emulator::Cpu& cpu, std::s
 }
 
 /* Begin jump instructions */
-std::optional<InstructionConfig> jmp_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto jmp_abs(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -1278,7 +1323,8 @@ std::optional<InstructionConfig> jmp_abs(emulator::Cpu& cpu, std::span<const std
     return std::make_optional<InstructionConfig>(0, 3);
 }
 
-std::optional<InstructionConfig> jmp_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto jmp_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -1296,7 +1342,7 @@ std::optional<InstructionConfig> jmp_indirect(emulator::Cpu& cpu, std::span<cons
 /* End jump instructions */
 
 // Branching functions here
-std::optional<InstructionConfig> bne(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto bne(emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1317,7 +1363,7 @@ std::optional<InstructionConfig> bne(emulator::Cpu& cpu, std::span<const std::ui
 //        Can encode this by using a Cpu.n_cycles variable to keep the cycles number
 //        OR we start returning a tuple with the (bytes_consumed, n_cycles) per ins.
 template <bool Value>
-Instruction branch_flag_value(bool emulator::Flags::*flag)
+[[nodiscard]] auto branch_flag_value(bool emulator::Flags::* flag) -> Instruction
 {
     // TODO : Do we need a return here?
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
@@ -1335,7 +1381,7 @@ Instruction branch_flag_value(bool emulator::Flags::*flag)
 
 /// common code for the or related opcodes
 template <std::size_t T>
-inline std::optional<std::size_t> ora_operation(emulator::Cpu& cpu, std::uint8_t value)
+[[nodiscard]] inline auto ora_operation(emulator::Cpu& cpu, std::uint8_t value) -> std::optional<std::size_t>
 {
     cpu.reg.a   = cpu.reg.a | value;
     cpu.flags.n = 0b1000'0000 & cpu.reg.a;
@@ -1344,7 +1390,7 @@ inline std::optional<std::size_t> ora_operation(emulator::Cpu& cpu, std::uint8_t
 }
 
 template <std::size_t T>
-inline std::optional<std::size_t> and_operation(emulator::Cpu& cpu, std::uint8_t value)
+[[nodiscard]] inline auto and_operation(emulator::Cpu& cpu, std::uint8_t value) -> std::optional<std::size_t>
 {
     cpu.reg.a   = cpu.reg.a & value;
     cpu.flags.n = 0b1000'0000 & cpu.reg.a;
@@ -1353,7 +1399,7 @@ inline std::optional<std::size_t> and_operation(emulator::Cpu& cpu, std::uint8_t
 }
 
 template <std::size_t T>
-std::optional<std::size_t> eor_operation(emulator::Cpu& cpu, std::uint8_t value)
+[[nodiscard]] auto eor_operation(emulator::Cpu& cpu, std::uint8_t value) -> std::optional<std::size_t>
 {
     cpu.reg.a   = cpu.reg.a ^ value;
     cpu.flags.n = 0b1000'0000 & cpu.reg.a;
@@ -1362,7 +1408,8 @@ std::optional<std::size_t> eor_operation(emulator::Cpu& cpu, std::uint8_t value)
 }
 
 // Logical operations
-std::optional<std::size_t> eor_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto eor_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1373,7 +1420,8 @@ std::optional<std::size_t> eor_acc_immediate(emulator::Cpu& cpu, std::span<const
     return eor_operation<2>(cpu, program[cpu.reg.pc + 1]);
 }
 
-std::optional<std::size_t> eor_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto eor_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1385,7 +1433,8 @@ std::optional<std::size_t> eor_acc_zeropage(emulator::Cpu& cpu, std::span<const 
     return eor_operation<2>(cpu, cpu.mem[offset]);
 }
 
-std::optional<std::size_t> eor_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto eor_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1397,7 +1446,8 @@ std::optional<std::size_t> eor_acc_zeropage_x(emulator::Cpu& cpu, std::span<cons
     return eor_operation<2>(cpu, cpu.mem[pos]);
 }
 
-std::optional<std::size_t> eor_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto eor_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -1413,7 +1463,7 @@ std::optional<std::size_t> eor_acc_absolute(emulator::Cpu& cpu, std::span<const 
     return eor_operation<3>(cpu, cpu.mem[addr]);
 }
 
-Instruction eor_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
+[[nodiscard]] auto eor_acc_absolute_plus_reg(std::uint8_t emulator::Registers::* reg) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1429,7 +1479,8 @@ Instruction eor_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-std::optional<std::size_t> eor_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto eor_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1441,7 +1492,8 @@ std::optional<std::size_t> eor_acc_indexed_indirect(emulator::Cpu& cpu, std::spa
     return eor_operation<2>(cpu, cpu.mem[addr]);
 }
 
-std::optional<std::size_t> eor_acc_indirect_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto eor_acc_indirect_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1453,7 +1505,8 @@ std::optional<std::size_t> eor_acc_indirect_indexed(emulator::Cpu& cpu, std::spa
     return eor_operation<2>(cpu, cpu.mem[addr]);
 }
 
-std::optional<std::size_t> and_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto and_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1464,7 +1517,8 @@ std::optional<std::size_t> and_acc_immediate(emulator::Cpu& cpu, std::span<const
     return and_operation<2>(cpu, program[cpu.reg.pc + 1]);
 }
 
-std::optional<std::size_t> and_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto and_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1476,7 +1530,8 @@ std::optional<std::size_t> and_acc_zeropage(emulator::Cpu& cpu, std::span<const 
     return and_operation<2>(cpu, cpu.mem[offset]);
 }
 
-std::optional<std::size_t> and_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto and_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1488,7 +1543,8 @@ std::optional<std::size_t> and_acc_zeropage_x(emulator::Cpu& cpu, std::span<cons
     return and_operation<2>(cpu, cpu.mem[pos]);
 }
 
-std::optional<std::size_t> and_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto and_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -1504,7 +1560,7 @@ std::optional<std::size_t> and_acc_absolute(emulator::Cpu& cpu, std::span<const 
     return and_operation<3>(cpu, cpu.mem[addr]);
 }
 
-Instruction and_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
+[[nodiscard]] auto and_acc_absolute_plus_reg(std::uint8_t emulator::Registers::* reg) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1520,7 +1576,8 @@ Instruction and_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-std::optional<std::size_t> and_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto and_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1532,7 +1589,8 @@ std::optional<std::size_t> and_acc_indexed_indirect(emulator::Cpu& cpu, std::spa
     return and_operation<2>(cpu, cpu.mem[addr]);
 }
 
-std::optional<std::size_t> and_acc_indirect_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto and_acc_indirect_indexed(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1544,7 +1602,8 @@ std::optional<std::size_t> and_acc_indirect_indexed(emulator::Cpu& cpu, std::spa
     return and_operation<2>(cpu, cpu.mem[addr]);
 }
 
-std::optional<std::size_t> or_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto or_acc_immediate(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1555,7 +1614,8 @@ std::optional<std::size_t> or_acc_immediate(emulator::Cpu& cpu, std::span<const 
     return ora_operation<2>(cpu, program[cpu.reg.pc + 1]);
 }
 
-std::optional<std::size_t> or_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto or_acc_zeropage(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1567,7 +1627,8 @@ std::optional<std::size_t> or_acc_zeropage(emulator::Cpu& cpu, std::span<const s
     return ora_operation<2>(cpu, cpu.mem[offset]);
 }
 
-std::optional<std::size_t> or_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto or_acc_zeropage_x(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1579,7 +1640,8 @@ std::optional<std::size_t> or_acc_zeropage_x(emulator::Cpu& cpu, std::span<const
     return ora_operation<2>(cpu, cpu.mem[pos]);
 }
 
-std::optional<std::size_t> or_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto or_acc_absolute(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 2) >= program.size())
@@ -1595,7 +1657,7 @@ std::optional<std::size_t> or_acc_absolute(emulator::Cpu& cpu, std::span<const s
     return ora_operation<3>(cpu, cpu.mem[addr]);
 }
 
-Instruction or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
+[[nodiscard]] auto or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::* reg) -> Instruction
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1611,7 +1673,8 @@ Instruction or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-std::optional<std::size_t> or_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto or_acc_indexed_indirect(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1623,7 +1686,8 @@ std::optional<std::size_t> or_acc_indexed_indirect(emulator::Cpu& cpu, std::span
     return ora_operation<2>(cpu, cpu.mem[addr]);
 }
 
-std::optional<std::size_t> or_acc_indirect_index(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+[[nodiscard]] auto or_acc_indirect_index(emulator::Cpu& cpu, std::span<const std::uint8_t> program)
+    -> std::optional<std::size_t>
 {
     ENABLE_PROFILER(cpu);
     if ((cpu.reg.pc + 1) >= program.size())
@@ -1637,7 +1701,7 @@ std::optional<std::size_t> or_acc_indirect_index(emulator::Cpu& cpu, std::span<c
 
 // TODO : provide support for counting the number of cycles passed
 // from the start of the program
-std::array<Instruction, 256> get_instructions()
+[[nodiscard]] auto get_instructions() -> std::array<Instruction, 256>
 {
     // TODO : Goal is to have around all ~154 instructions supported
 
@@ -1838,8 +1902,8 @@ std::array<Instruction, 256> get_instructions()
     return supported_instructions;
 }
 
-std::optional<InstructionConfig> execute_next(
-    emulator::Cpu& cpu, std::span<const std::uint8_t> program, std::array<Instruction, 256> instructions)
+[[nodiscard]] auto execute_next(emulator::Cpu& cpu, std::span<const std::uint8_t> program,
+    std::array<Instruction, 256> instructions) -> std::optional<InstructionConfig>
 {
     ENABLE_PROFILER(cpu);
     // Read 1 byte for the operator
@@ -1859,7 +1923,7 @@ std::optional<InstructionConfig> execute_next(
     }
     catch (emulator::OpcodeNotSupported const& e)
     {
-        std::cout << e.what() << std::endl;
+        std::cout << e.what() << "\n";
         return std::nullopt;
     }
 }
@@ -1867,7 +1931,7 @@ std::optional<InstructionConfig> execute_next(
 
 export namespace emulator
 {
-    std::size_t execute(Cpu& cpu, std::span<const std::uint8_t> program)
+    auto execute(Cpu& cpu, std::span<const std::uint8_t> program) -> std::size_t
     {
         std::size_t n_cycles = 0;
         ENABLE_PROFILER(cpu);
