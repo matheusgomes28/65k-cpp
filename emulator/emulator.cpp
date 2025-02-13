@@ -1,8 +1,6 @@
 module;
 
-// #ifdef BUILD_PROFILER
-import profiler;
-// #endif // BUILD_PROFILER
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <array>
@@ -20,15 +18,16 @@ import profiler;
 #include <unordered_map>
 #include <utility>
 
-#include <fmt/format.h>
-
 #ifndef CLOCK_SPEED_MHZ
 #define CLOCK_SPEED_MHZ 1.79
 #endif // CLOCK_SPEED_MHZ
 
-#include <fmt/format.h>
 
 export module emulator;
+
+#ifdef BUILD_PROFILER
+import profiler;
+#endif // BUILD_PROFILER
 
 // Define a macro for the profiler
 #ifdef BUILD_PROFILER
@@ -62,9 +61,9 @@ export namespace emulator
     class OpcodeNotSupported : public std::exception
     {
     public:
-        OpcodeNotSupported(std::string opcode) : _error_msg{"opcode not supported: " + opcode} {}
+        OpcodeNotSupported(std::string const& opcode) : _error_msg{"opcode not supported: " + opcode} {}
 
-        const char* what() const throw() override
+        auto what() const noexcept -> const char* override
         {
             return _error_msg.c_str();
         }
@@ -93,7 +92,7 @@ export namespace emulator
         std::uint8_t sp{0xff};
     };
 
-    bool operator==(Flags const& lhs, Flags const& rhs)
+    auto operator==(Flags const& lhs, Flags const& rhs) -> bool
     {
         return lhs.n == rhs.n && lhs.v == rhs.v && lhs.b == rhs.b && lhs.d == rhs.d && lhs.i == rhs.i && lhs.z == rhs.z
                && lhs.c == rhs.c;
@@ -114,7 +113,7 @@ export namespace emulator
         // Clock speed for this particular CPU
         double clock_speed = CLOCK_SPEED_MHZ;
 
-        std::uint8_t sr() const
+        auto sr() const -> std::uint8_t
         {
             // clang-format off
             std::uint8_t const sp_val = 
