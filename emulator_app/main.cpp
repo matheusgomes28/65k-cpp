@@ -39,27 +39,129 @@ namespace
         {.r = 187, .g = 187, .b = 187, .a = 255} // Grey
     }};
 
+    enum class ScrollDriver : std::uint8_t
+    {
+        Left,
+        Right
+    };
+
 
     void draw_memory_view(emulator::Cpu& cpu)
     {
-        ImGui::BeginGroup();
-        ImGui::BeginChild("offset child", ImVec2(200.0f, 200.0f), ImGuiChildFlags_Borders, ImGuiWindowFlags_MenuBar);
+        static constexpr float offset_view_width  = 75.0f;
+        static constexpr float offset_view_height = 200.0f;
+        int constexpr num_columns                 = 16;
+        int constexpr num_rows                    = 16;
+
+        // Keep the previous value of the scrollbar
+        static float scroll_value = 0.0f;
+        static auto scroll_driver = ScrollDriver::Left;
+
+        /****************************************************
+         Memory Offset View
+         ***************************************************/
+        ImGui::BeginChild("Offset View", ImVec2(offset_view_width, offset_view_height), ImGuiChildFlags_Borders,
+            ImGuiWindowFlags_MenuBar);
         if (ImGui::BeginMenuBar())
         {
-            ImGui::TextUnformatted("start offset");
+            ImGui::TextUnformatted("Offset");
             ImGui::EndMenuBar();
         }
 
-        for (int item = 0; item < 16; item++)
+        if (ImGui::BeginTable("MemoryOffsetTable", 1, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
         {
-            std::string const offset_str = fmt::format("0x{:02x}", item * 16);
-            ImGui::Text("%s", offset_str.c_str());
+            // Fill the table with data
+            for (int row = 0; row < num_rows; row++)
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                std::string const offset_str = fmt::format("0x{:02x}", row * 16);
+                ImGui::Text("%s", offset_str.c_str());
+            }
+
+            ImGui::EndTable();
         }
-        float scroll_y     = ImGui::GetScrollY();
-        float scroll_max_y = ImGui::GetScrollMaxY();
+
+
+        if (ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_NoPopupHierarchy))
+        {
+            scroll_driver = ScrollDriver::Left;
+        }
+
+
+        if (scroll_driver == ScrollDriver::Left)
+        {
+            auto const left_scroll_value = ImGui::GetScrollY();
+            if (scroll_value != left_scroll_value)
+            {
+                scroll_value = left_scroll_value;
+            }
+        }
+        else
+        {
+            ImGui::SetScrollY(scroll_value);
+        }
+
+        // override scroll progress if not in focus
+        // if (left_scroll_value != scroll_value) {
+        //     ImGui::SetScrollY(scroll_value);
+        // }
+
         ImGui::EndChild();
-        ImGui::Text("%.0f/%.0f", scroll_y, scroll_max_y);
-        ImGui::EndGroup();
+        ImGui::SameLine();
+
+        /****************************************************
+         Memory Contents View
+         ***************************************************/
+        auto const available_size = ImGui::GetContentRegionAvail();
+        ImGui::BeginChild("ScrollingRegion", ImVec2(available_size.x, offset_view_height), true,
+            ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_MenuBar);
+
+        // Menu top bar
+        if (ImGui::BeginMenuBar())
+        {
+            ImGui::TextUnformatted("Memory Contents");
+            ImGui::EndMenuBar();
+        }
+
+        if (ImGui::BeginTable("TableWithoutHeader", num_columns, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+        {
+            // Fill the table with data
+            for (int row = 0; row < num_rows; row++)
+            {
+                ImGui::TableNextRow();
+                for (int col = 0; col < num_columns; col++)
+                {
+                    ImGui::TableSetColumnIndex(col);
+                    auto const data = fmt::format("0x{:02x}", cpu.mem[row * col]);
+                    ImGui::Text("%s", data.c_str());
+                }
+            }
+
+            ImGui::EndTable();
+        }
+
+        ImGui::IsItemActive();
+        if (ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_NoPopupHierarchy))
+        {
+            scroll_driver = ScrollDriver::Right;
+        }
+
+        if (scroll_driver == ScrollDriver::Right)
+        {
+            auto const right_scroll_value = ImGui::GetScrollY();
+            if (right_scroll_value != scroll_value)
+            {
+                scroll_value = right_scroll_value;
+            }
+        }
+        else
+        {
+            ImGui::SetScrollY(scroll_value);
+        }
+
+
+        ImGui::EndChild();
     }
 } // namespace
 
@@ -122,7 +224,7 @@ auto draw(emulator::Cpu& cpu) -> bool
         /***************************************************
          * Drawing the scrollable memory view               *
          ***************************************************/
-         draw_memory_view(cpu);
+        draw_memory_view(cpu);
         ImGui::BeginChild("LeftTable", ImVec2(table_width, table_height), true);
         ImGui::BeginGroup();
         { // left panel with the offsets

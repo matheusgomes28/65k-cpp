@@ -1,7 +1,7 @@
 module;
 
-#include <imgui.h>
 #include <fmt/format.h>
+#include <imgui.h>
 
 #include <cstdint>
 

@@ -23,7 +23,8 @@ namespace
     /// header is selected (true) or not (false)
     std::array<bool, columns_count> column_selected{};
 
-    auto draw_register_cell(std::uint8_t val, int col_index) -> void {
+    auto draw_register_cell(std::uint8_t val, int col_index) -> void
+    {
         ImGui::TableSetColumnIndex(col_index);
         std::string const reg_str = fmt::format("0x{:02x}", val);
         // ImGui::Selectable(reg_str.c_str(), column_selected[col_index]);
@@ -35,8 +36,7 @@ export namespace emulator::ui
 {
     auto draw_register_table(emulator::Cpu& cpu)
     {
-        if (ImGui::BeginTable("RegistersTable", columns_count,
-                ImGuiTableFlags_Borders | ImGuiTableFlags_Reorderable))
+        if (ImGui::BeginTable("RegistersTable", columns_count, ImGuiTableFlags_Borders | ImGuiTableFlags_Reorderable))
         {
             for (auto const& header : headers)
             {
@@ -72,4 +72,4 @@ export namespace emulator::ui
             ImGui::EndTable();
         }
     }
-} // emulator::ui
+} // namespace emulator::ui

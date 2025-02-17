@@ -1,8 +1,8 @@
 module;
 
+#include <array>
 #include <fmt/format.h>
 #include <imgui.h>
-#include <array>
 #include <string>
 
 export module flag_table_ui;
@@ -73,4 +73,4 @@ export namespace emulator::ui
     }
 } // namespace emulator::ui
 
-module : private;
+module :private;
