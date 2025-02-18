@@ -16,7 +16,7 @@ namespace
     constexpr int columns_count = 8;
 
     /// Header text for each of the registers cells
-    constexpr std::array<std::string, columns_count> headers = {"N", "V", "-", "B", "D", "I", "Z", "C"};
+    constexpr std::array<const char*, columns_count> headers = {"N", "V", "-", "B", "D", "I", "Z", "C"};
 
     /// Array of boolens where each index represents whether the
     /// header is selected (true) or not (false)
@@ -39,7 +39,7 @@ export namespace emulator::ui
         {
             for (auto const& header : headers)
             {
-                ImGui::TableSetupColumn(header.c_str());
+                ImGui::TableSetupColumn(header);
             }
 
             // This is submitting a different style and checkboxes to
