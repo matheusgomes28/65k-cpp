@@ -10,7 +10,7 @@ import emulator;
 
 namespace
 {
-    void test_flag(bool emulator::Flags::*flag, std::size_t pos)
+    void test_flag(bool emulator::Flags::* flag, std::size_t pos)
     {
         emulator::Cpu cpu;
 

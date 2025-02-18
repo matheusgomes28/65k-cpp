@@ -20,3 +20,4 @@ else()
 endif()
 
 target_link_libraries(emulator PRIVATE fmt::fmt)
+add_library(emulator::emulator ALIAS emulator)

@@ -14,6 +14,7 @@ option(BUILD_PROFILER "Build profiling for the instruction handlers")
 
 add_subdirectory(emulator)
 add_subdirectory(emulator_app)
+add_subdirectory(ui)
 
 if (BUILD_PROFILER)
     add_subdirectory(profiler)

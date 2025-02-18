@@ -1,8 +1,6 @@
 module;
 
-// #ifdef BUILD_PROFILER
-import profiler;
-// #endif // BUILD_PROFILER
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <array>
@@ -20,15 +18,16 @@ import profiler;
 #include <unordered_map>
 #include <utility>
 
-#include <fmt/format.h>
-
 #ifndef CLOCK_SPEED_MHZ
 #define CLOCK_SPEED_MHZ 1.79
 #endif // CLOCK_SPEED_MHZ
 
-#include <fmt/format.h>
 
 export module emulator;
+
+#ifdef BUILD_PROFILER
+import profiler;
+#endif // BUILD_PROFILER
 
 // Define a macro for the profiler
 #ifdef BUILD_PROFILER
@@ -62,9 +61,9 @@ export namespace emulator
     class OpcodeNotSupported : public std::exception
     {
     public:
-        OpcodeNotSupported(std::string opcode) : _error_msg{"opcode not supported: " + opcode} {}
+        OpcodeNotSupported(std::string const& opcode) : _error_msg{"opcode not supported: " + opcode} {}
 
-        const char* what() const throw() override
+        auto what() const noexcept -> const char* override
         {
             return _error_msg.c_str();
         }
@@ -93,7 +92,7 @@ export namespace emulator
         std::uint8_t sp{0xff};
     };
 
-    bool operator==(Flags const& lhs, Flags const& rhs)
+    auto operator==(Flags const& lhs, Flags const& rhs) -> bool
     {
         return lhs.n == rhs.n && lhs.v == rhs.v && lhs.b == rhs.b && lhs.d == rhs.d && lhs.i == rhs.i && lhs.z == rhs.z
                && lhs.c == rhs.c;
@@ -114,7 +113,7 @@ export namespace emulator
         // Clock speed for this particular CPU
         double clock_speed = CLOCK_SPEED_MHZ;
 
-        std::uint8_t sr() const
+        auto sr() const -> std::uint8_t
         {
             // clang-format off
             std::uint8_t const sp_val = 
@@ -174,7 +173,7 @@ using Instruction = std::function<std::optional<InstructionConfig>(emulator::Cpu
 /// @param cpu is the cpu object to operate on
 /// @param value is the zeropage address to add the index to
 /// @param index is the register to use as the index add value
-inline std::uint16_t zeropage_indexed(emulator::Cpu& cpu, std::uint8_t value, std::uint8_t emulator::Registers::*index)
+inline std::uint16_t zeropage_indexed(emulator::Cpu& cpu, std::uint8_t value, std::uint8_t emulator::Registers::* index)
 {
     auto const masked = ((cpu.reg).*index + value) & 0xff;
     return static_cast<std::uint16_t>(masked);
@@ -188,7 +187,7 @@ inline std::uint16_t zeropage_indexed(emulator::Cpu& cpu, std::uint8_t value, st
 /// @param index is the pointer to the register to use as the index add.
 /// @return the resolved target address.
 inline std::uint16_t absolute_indexed(
-    emulator::Cpu& cpu, std::uint8_t lsb, std::uint8_t hsb, std::uint8_t emulator::Registers::*index)
+    emulator::Cpu& cpu, std::uint8_t lsb, std::uint8_t hsb, std::uint8_t emulator::Registers::* index)
 {
     // Do we want to put these numbers as std::uint16_t?
     auto const address        = (hsb << 8) | lsb;
@@ -659,7 +658,7 @@ std::optional<InstructionConfig> asl_absolute_indexed(emulator::Cpu& cpu, std::s
 /* End bit shift/rotation functions */
 
 /* Flag setting opcodes */
-Instruction set_flag(bool emulator::Flags::*f)
+Instruction set_flag(bool emulator::Flags::* f)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -671,7 +670,7 @@ Instruction set_flag(bool emulator::Flags::*f)
 /* End of flag setting opcodes */
 
 /* Flag clearning operation */
-Instruction clear_flag(bool emulator::Flags::*f)
+Instruction clear_flag(bool emulator::Flags::* f)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -682,7 +681,7 @@ Instruction clear_flag(bool emulator::Flags::*f)
 }
 /* End of flag clearning operations */
 
-Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
+Instruction ld_immediate(std::uint8_t emulator::Registers::* reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -701,7 +700,7 @@ Instruction ld_immediate(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-Instruction ld_zeropage(std::uint8_t emulator::Registers::*reg)
+Instruction ld_zeropage(std::uint8_t emulator::Registers::* reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -730,7 +729,7 @@ Instruction ld_zeropage(std::uint8_t emulator::Registers::*reg)
 /// @param add the register to use as the index add.
 /// @return Instruction containing the number of bytes consumed from the
 /// program and the cycles taken.
-Instruction ld_zeropage_indexed(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+Instruction ld_zeropage_indexed(std::uint8_t emulator::Registers::* to, std::uint8_t emulator::Registers::* add)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -752,7 +751,7 @@ Instruction ld_zeropage_indexed(std::uint8_t emulator::Registers::*to, std::uint
     };
 }
 
-Instruction ld_absolute(std::uint8_t emulator::Registers::*to)
+Instruction ld_absolute(std::uint8_t emulator::Registers::* to)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -775,7 +774,7 @@ Instruction ld_absolute(std::uint8_t emulator::Registers::*to)
     };
 }
 
-Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::* to, std::uint8_t emulator::Registers::* add)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -798,7 +797,7 @@ Instruction ld_absolute_plus_reg(std::uint8_t emulator::Registers::*to, std::uin
 
 // This is basically zeropage + x, but an extra indirection with
 // the value ad zeropage + x as a position
-Instruction ld_index_indirect(std::uint8_t emulator::Registers::*to, std::uint8_t emulator::Registers::*add)
+Instruction ld_index_indirect(std::uint8_t emulator::Registers::* to, std::uint8_t emulator::Registers::* add)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -824,7 +823,7 @@ Instruction ld_index_indirect(std::uint8_t emulator::Registers::*to, std::uint8_
     };
 }
 
-Instruction ld_indirect_index(std::uint8_t emulator::Registers::*to)
+Instruction ld_indirect_index(std::uint8_t emulator::Registers::* to)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -978,7 +977,7 @@ std::optional<InstructionConfig> dec_abs_indexed(emulator::Cpu& cpu, std::span<c
 }
 /* End Decrement operations */
 
-Instruction inc_reg(std::uint8_t emulator::Registers::*reg)
+Instruction inc_reg(std::uint8_t emulator::Registers::* reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> /* program */)
     {
@@ -990,7 +989,7 @@ Instruction inc_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-Instruction dec_reg(std::uint8_t emulator::Registers::*reg)
+Instruction dec_reg(std::uint8_t emulator::Registers::* reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> /* program */)
     {
@@ -1002,7 +1001,7 @@ Instruction dec_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-Instruction transfer_regs(std::uint8_t emulator::Registers::*from, std::uint8_t emulator::Registers::*to)
+Instruction transfer_regs(std::uint8_t emulator::Registers::* from, std::uint8_t emulator::Registers::* to)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> /* program */)
     {
@@ -1023,7 +1022,7 @@ std::optional<InstructionConfig> txa(emulator::Cpu& cpu, std::span<const std::ui
     return std::make_optional<InstructionConfig>(1);
 }
 
-Instruction st_indirect(std::uint8_t emulator::Registers::*from, std::uint8_t emulator::Registers::*add)
+Instruction st_indirect(std::uint8_t emulator::Registers::* from, std::uint8_t emulator::Registers::* add)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1047,7 +1046,7 @@ Instruction st_indirect(std::uint8_t emulator::Registers::*from, std::uint8_t em
     };
 }
 
-Instruction st_zeropage(std::uint8_t emulator::Registers::*from)
+Instruction st_zeropage(std::uint8_t emulator::Registers::* from)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1070,7 +1069,7 @@ Instruction st_zeropage(std::uint8_t emulator::Registers::*from)
 /// arguments.
 /// @param from is the register containing the value to be stored in memory.
 /// @param index is the register used as the index (i.e. X or Y mostly).
-Instruction st_zeropage_indexed(std::uint8_t emulator::Registers::*from, std::uint8_t emulator::Registers::*index)
+Instruction st_zeropage_indexed(std::uint8_t emulator::Registers::* from, std::uint8_t emulator::Registers::* index)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1088,7 +1087,7 @@ Instruction st_zeropage_indexed(std::uint8_t emulator::Registers::*from, std::ui
     };
 }
 
-Instruction sta_absolute_indexed(std::uint8_t emulator::Registers::*index)
+Instruction sta_absolute_indexed(std::uint8_t emulator::Registers::* index)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1107,7 +1106,7 @@ Instruction sta_absolute_indexed(std::uint8_t emulator::Registers::*index)
     };
 }
 
-Instruction st_absolute(std::uint8_t emulator::Registers::*from)
+Instruction st_absolute(std::uint8_t emulator::Registers::* from)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1140,7 +1139,7 @@ std::optional<InstructionConfig> sta_index_indirect(emulator::Cpu& cpu, std::spa
 }
 
 // Compare instructions here
-void cmp_operation(emulator::Cpu& cpu, std::uint8_t emulator::Registers::*reg, std::uint8_t val)
+void cmp_operation(emulator::Cpu& cpu, std::uint8_t emulator::Registers::* reg, std::uint8_t val)
 {
     auto const comparison = (cpu.reg).*reg - val;
     cpu.flags.n           = comparison & 0b1000'0000; // Negative flag
@@ -1150,7 +1149,7 @@ void cmp_operation(emulator::Cpu& cpu, std::uint8_t emulator::Registers::*reg, s
 
 /// Compares whichever register was given to the immediate
 /// value in the next address in the program array
-Instruction cmp_immediate_reg(std::uint8_t emulator::Registers::*reg)
+Instruction cmp_immediate_reg(std::uint8_t emulator::Registers::* reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1165,7 +1164,7 @@ Instruction cmp_immediate_reg(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-Instruction cmp_zeropage_reg(std::uint8_t emulator::Registers::*reg)
+Instruction cmp_zeropage_reg(std::uint8_t emulator::Registers::* reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1195,7 +1194,7 @@ std::optional<InstructionConfig> cmp_zp_indexed(emulator::Cpu& cpu, std::span<co
     return std::make_optional<InstructionConfig>(2, 4);
 }
 
-Instruction cmp_absolute(std::uint8_t emulator::Registers::*reg)
+Instruction cmp_absolute(std::uint8_t emulator::Registers::* reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1215,7 +1214,7 @@ Instruction cmp_absolute(std::uint8_t emulator::Registers::*reg)
     };
 }
 
-Instruction cmp_abs_indexed(std::uint8_t emulator::Registers::*index)
+Instruction cmp_abs_indexed(std::uint8_t emulator::Registers::* index)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1317,7 +1316,7 @@ std::optional<InstructionConfig> bne(emulator::Cpu& cpu, std::span<const std::ui
 //        Can encode this by using a Cpu.n_cycles variable to keep the cycles number
 //        OR we start returning a tuple with the (bytes_consumed, n_cycles) per ins.
 template <bool Value>
-Instruction branch_flag_value(bool emulator::Flags::*flag)
+Instruction branch_flag_value(bool emulator::Flags::* flag)
 {
     // TODO : Do we need a return here?
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
@@ -1413,7 +1412,7 @@ std::optional<std::size_t> eor_acc_absolute(emulator::Cpu& cpu, std::span<const 
     return eor_operation<3>(cpu, cpu.mem[addr]);
 }
 
-Instruction eor_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
+Instruction eor_acc_absolute_plus_reg(std::uint8_t emulator::Registers::* reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1504,7 +1503,7 @@ std::optional<std::size_t> and_acc_absolute(emulator::Cpu& cpu, std::span<const 
     return and_operation<3>(cpu, cpu.mem[addr]);
 }
 
-Instruction and_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
+Instruction and_acc_absolute_plus_reg(std::uint8_t emulator::Registers::* reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {
@@ -1595,7 +1594,7 @@ std::optional<std::size_t> or_acc_absolute(emulator::Cpu& cpu, std::span<const s
     return ora_operation<3>(cpu, cpu.mem[addr]);
 }
 
-Instruction or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::*reg)
+Instruction or_acc_absolute_plus_reg(std::uint8_t emulator::Registers::* reg)
 {
     return [=](emulator::Cpu& cpu, std::span<const std::uint8_t> program) -> std::optional<InstructionConfig>
     {

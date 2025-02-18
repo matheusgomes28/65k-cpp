@@ -15,7 +15,7 @@ jobs:
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ubuntu-latest
     container:
-      image: mattgomes28/jammy-cpp:0.0.0
+      image: mattgomes28/jammy-cpp:0.0.1
       options: --user 1001
 
     steps:

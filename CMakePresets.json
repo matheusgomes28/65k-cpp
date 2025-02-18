@@ -36,11 +36,11 @@
             "hidden": true,
             "generator": "Ninja",
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "clang-17",
-		        "CMAKE_CXX_COMPILER": "clang++-17",
+                "CMAKE_C_COMPILER": "clang-19",
+		        "CMAKE_CXX_COMPILER": "clang++-19",
                 "CMAKE_CXX_FLAGS_INIT": "$env{CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -pedantic",
                 "CMAKE_CXX_SCAN_FOR_MODULES": true,
-		        "CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS": "/usr/bin/clang-scan-deps-17"
+		        "CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS": "/usr/bin/clang-scan-deps-19"
             }
         },
         {
@@ -115,7 +115,7 @@
             "binaryDir": "${sourceDir}/build/unix-deb-ninja",
             "inherits": ["unix-ninja", "deb"],
             "cacheVariables": {
-                "CMAKE_CXX_FLAGS": "-O0 --coverage -g -fsanitize=address",
+                "CMAKE_CXX_FLAGS": "-O0 -g -fsanitize=address",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/unix-deb-ninja/install",
                 "CLOCK_SPEED_MHZ": "3.58",
                 "BUILD_PROFILER": true
