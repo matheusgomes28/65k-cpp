@@ -133,7 +133,7 @@ namespace
                 for (int col = 0; col < num_columns; col++)
                 {
                     ImGui::TableSetColumnIndex(col);
-                    auto const data = fmt::format("0x{:02x}", cpu.mem[row * col]);
+                    auto const data = fmt::format("0x{:02x}", cpu.mem[(row * num_columns) + col]);
                     ImGui::Text("%s", data.c_str());
                 }
             }
@@ -163,6 +163,38 @@ namespace
 
         ImGui::EndChild();
     }
+
+
+    void draw_control_buttons(emulator::Cpu& cpu)
+    {
+        auto const button_box_height = 100.0f;
+
+        ImGui::BeginChild("ControlButtonView", ImVec2(0, button_box_height), true, ImGuiWindowFlags_NoDecoration);
+
+        // We want to set the cursor position to roughly
+        // where we would end up centering the buttons
+        auto const current_pos    = ImGui::GetCursorPosX();
+        auto const available_size = ImGui::GetContentRegionAvail();
+        ImGui::SetCursorPosX(current_pos + ((available_size.x - 230) * 0.5));
+
+        auto const button_size = ImVec2(70, 20);
+        if (ImGui::Button("Pause", button_size))
+        {
+            // TODO : pause the running emulation
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Step", button_size))
+        {
+            // TODO : step through an instruction
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Continue", button_size))
+        {
+            // TODO : continue running the program
+        }
+
+        ImGui::EndChild();
+    }
 } // namespace
 
 
@@ -184,7 +216,7 @@ auto draw(emulator::Cpu& cpu) -> bool
 
         ImGui::ShowDemoWindow();
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(515, 131));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(745, 345));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("Emulator", &window_open);
 
@@ -225,6 +257,12 @@ auto draw(emulator::Cpu& cpu) -> bool
          * Drawing the scrollable memory view               *
          ***************************************************/
         draw_memory_view(cpu);
+
+        /***************************************************
+         * Drawing the control buttons at the bottom       *
+         ***************************************************/
+        draw_control_buttons(cpu);
+
         ImGui::BeginChild("LeftTable", ImVec2(table_width, table_height), true);
         ImGui::BeginGroup();
         { // left panel with the offsets
