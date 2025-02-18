@@ -17,9 +17,7 @@ export namespace profiler
     template <typename T, typename FuncName, typename Measure>
     concept Bookeper = std::convertible_to<FuncName, std::string> && std::convertible_to<Measure, double>
                        && requires(T v, FuncName func_name, Measure measure) {
-                              {
-                                  v.update(func_name, measure)
-                              } -> std::same_as<bool>;
+                              { v.update(func_name, measure) } -> std::same_as<bool>;
                           };
 
     template <typename T, typename FuncName, typename Measure>
