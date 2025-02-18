@@ -32,7 +32,7 @@ RUN apt-get update \
     && apt-get autoremove --purge -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Install the LLVM 17 tools
+# Install the LLVM 19 tools
 RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
         gnupg \
@@ -41,17 +41,17 @@ RUN apt-get update \
         wget \
     && wget https://apt.llvm.org/llvm.sh \
     && chmod +x llvm.sh \
-    && ./llvm.sh 17 \
+    && ./llvm.sh 19 \
     && apt-get install -y --no-install-recommends --no-install-suggests \
-        clang-format-17 \
-        clang-tidy-17 \
-        clang-tools-17 \
-        libclang-rt-17-dev \
-    && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 10 \
-    && update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-17 10 \
-    && update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-17 10 \
-    && update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-17 10 \
-    && update-alternatives --install /usr/bin/run-clang-tidy run-clang-tidy /usr/bin/run-clang-tidy-17 10 \
+        clang-format-19 \
+        clang-tidy-19 \
+        clang-tools-19 \
+        libclang-rt-19-dev \
+    && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 10 \
+    && update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-19 10 \
+    && update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-19 10 \
+    && update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-19 10 \
+    && update-alternatives --install /usr/bin/run-clang-tidy run-clang-tidy /usr/bin/run-clang-tidy-19 10 \
     && rm llvm.sh \
     && apt-get autoremove -y \
         gnupg \
